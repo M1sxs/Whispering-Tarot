@@ -1143,11 +1143,6 @@ textarea.inp{resize:none;line-height:1.5}
      JAVASCRIPT
 ════════════════════════════════════════ -->
 <script>
-// ════════════════════════════════════════════════
-// CONFIG — ตั้งค่า GAS URL ตรงนี้
-// Deploy Code.gs เป็น Web App แล้วใส่ URL ด้านล่าง
-// ════════════════════════════════════════════════
-
 // ── STATE ──────────────────────────────────────────
 var S={}, letters=[], fbDB=null, fbApp=null;
 var fbListeners={}, msgIds={}, spamBuf=[];
@@ -1164,23 +1159,9 @@ var admChatTarot='';
 
 // ── UTILS ───────────────────────────────────────────
 function $(id){return document.getElementById(id)}
-// ── GAS API URL — เปลี่ยนเป็น URL ของ GAS Web App ──────────
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbxBE5x1WBkIVqvpovcweV4UEY5DXtFU2AVkcO8oD6rq5b_9qRmVE-Xjztcsec0IJDRN/exec';
-
-function gsr(fn, args, ok, eb) {
-  // GAS Web App API call — deploy as "Anyone can access"
-  fetch(GAS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ fn: fn, args: args || [] }),
-    redirect: 'follow'
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(data) { if (ok) ok(data); })
-  .catch(function(err) {
-    if (eb) eb(err);
-    else toast('❌ ' + (err.message || 'เชื่อมต่อไม่ได้'));
-  });
+function gsr(fn,args,ok,eb){
+  google.script.run.withSuccessHandler(ok)
+    .withFailureHandler(eb||function(e){toast('❌ '+e.message)})[fn].apply(null,args);
 }
 // ── ANONYMOUS NAME GENERATOR ─────────────────────────
 // Generates "พี่ #XX" or "น้อง #XX" — consistent per uid, role-aware
