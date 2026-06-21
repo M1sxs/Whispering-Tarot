@@ -1,0 +1,2930 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>✦ Whispering Tarot ✦</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+/* ── TOKENS ─────────────────────────────── */
+:root{
+  --bg:#08090f;--sur:#0e0f1e;--sur2:#13142b;
+  --g:#c9a84c;--gl:#e8c97a;--gd:#7a5f2a;
+  --iv:#f0ead6;--cr:#8b1a2a;--crg:#d03040;
+  --pu:#3a2d6b;--pug:#6b4fbc;
+  --mu:#6a6455;--bd:#cfc9b8;
+  --bar:60px;
+  --safe:env(safe-area-inset-bottom,0px);
+}
+
+/* ── RESET / BASE ────────────────────────── */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;
+  margin:0;padding:0;-webkit-touch-callout:none;}
+html{
+  width:100%;height:100%;
+  background:var(--bg);
+}
+body{
+  width:100%;
+  height:100%;
+  min-height:100dvh;
+  background:var(--bg);color:var(--iv);
+  font-family:'Sarabun',sans-serif;
+  overflow:hidden;
+  overscroll-behavior:none;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  -webkit-text-size-adjust:100%;
+}
+
+/* ── APP SHELL ───────────────────────────── */
+#app{
+  position:fixed;
+  top:0;left:0;
+  width:100%;
+  height:100%;
+  width:100dvw;
+  height:100dvh;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+
+/* ── STARFIELD ───────────────────────────── */
+#star-canvas{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  width:100dvw;height:100dvh;
+  z-index:0;
+  pointer-events:none;
+}
+
+/* ── SCREENS ─────────────────────────────── */
+.scr{
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  width:100dvw;height:100dvh;
+  z-index:1;
+  display:none;flex-direction:column;
+  overflow:hidden;
+}
+.scr.on{display:flex}
+
+/* ── FONTS ───────────────────────────────── */
+.hd{font-family:'Cinzel',serif}
+.bd{font-family:'Crimson Pro',serif}
+.gl{height:1px;background:linear-gradient(90deg,transparent,var(--g),transparent)}
+
+/* ── PANELS ──────────────────────────────── */
+.pan{background:rgba(14,15,30,.92);border:1px solid rgba(201,168,76,.2);
+  border-radius:14px;backdrop-filter:blur(12px)}
+
+/* ── BUTTONS ─────────────────────────────── */
+.bg{background:linear-gradient(135deg,#5a421a,var(--g),#5a421a);color:#070810;
+  font-family:'Cinzel',serif;font-weight:700;letter-spacing:.04em;border:none;
+  cursor:pointer;border-radius:10px;padding:.65rem 1.3rem;font-size:.9rem;
+  display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
+  transition:filter .18s,transform .1s;white-space:nowrap;}
+.bg:hover{filter:brightness(1.15)}.bg:active{transform:scale(.96)}
+.bg:disabled{opacity:.4;cursor:not-allowed}
+.bo{background:transparent;border:1px solid var(--gd);color:var(--gl);
+  font-family:'Cinzel',serif;font-size:.75rem;border-radius:8px;
+  padding:.45rem .9rem;cursor:pointer;transition:border-color .2s}
+.bo:hover{border-color:var(--g)}
+.br{background:var(--cr);color:#fff;border:none;border-radius:8px;
+  padding:.4rem .8rem;cursor:pointer;font-size:.78rem}
+
+/* ── INPUTS ──────────────────────────────── */
+.inp{background:rgba(255,255,255,.06);border:1px solid var(--gd);
+  border-radius:10px;color:var(--iv);font-family:'Sarabun',sans-serif;
+  padding:.7rem 1rem;width:100%;outline:none;font-size:1rem;
+  transition:border-color .2s,box-shadow .2s;-webkit-appearance:none}
+.inp:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(201,168,76,.12)}
+textarea.inp{resize:none;line-height:1.5}
+
+/* ════════════════════════════════════════════
+   LOGIN SCREEN
+════════════════════════════════════════════ */
+#ls{
+  justify-content:center;align-items:center;
+  padding:1.5rem;
+  background:var(--bg);
+  width:100%;height:100%;
+  box-sizing:border-box;
+}
+.lbox{
+  width:90%;
+  max-width:400px;
+  background:rgba(14,15,30,.92);
+  border:1px solid rgba(201,168,76,.2);
+  border-radius:16px;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  padding:2rem 1.75rem;
+  box-sizing:border-box;
+  position:relative;
+  z-index:2;
+}
+@media(max-width:420px){
+  .lbox{width:92%;padding:1.75rem 1.25rem}
+  .lbox .inp{height:52px!important;font-size:1rem}
+}
+.logo-wrap{text-align:center;margin-bottom:1.5rem}
+.logo-wrap .sig{font-size:3.2rem;display:block;margin-bottom:.4rem;
+  filter:drop-shadow(0 0 18px rgba(201,168,76,.6))}
+.logo-wrap h1{font-family:'Cinzel',serif;font-size:clamp(1.1rem,4vw,1.5rem);
+  letter-spacing:.18em;color:var(--gl);margin-bottom:.2rem;white-space:nowrap}
+.logo-wrap p{font-family:'Crimson Pro',serif;font-size:.9rem;
+  color:var(--mu);font-style:italic}
+.lbl{display:block;font-family:'Cinzel',serif;font-size:.72rem;
+  color:var(--gd);letter-spacing:.08em;margin-bottom:.4rem}
+
+/* ════════════════════════════════════════════
+   TOP BAR (main screens)
+════════════════════════════════════════════ */
+.topbar{
+  flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:.6rem 1rem;
+  background:rgba(8,9,15,.95);
+  border-bottom:1px solid rgba(201,168,76,.1);
+  z-index:10;
+}
+.tb-center{text-align:center;flex:1;min-width:0;padding:0 .5rem}
+.tb-title{font-family:'Cinzel',serif;font-size:.82rem;letter-spacing:.1em;
+  color:var(--g);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-sub{font-size:.65rem;color:var(--mu);margin-top:.05rem}
+.ib{background:none;border:none;cursor:pointer;padding:.35rem;
+  color:var(--gd);font-size:1.2rem;line-height:1;border-radius:6px;
+  position:relative;transition:color .18s}
+.ib:hover{color:var(--g)}
+.dot{position:absolute;top:1px;right:1px;width:8px;height:8px;
+  border-radius:50%;background:var(--crg);display:none;
+  border:1.5px solid var(--bg);animation:pdot 1.3s ease infinite}
+.dot.on{display:block}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ════════════════════════════════════════════
+   BOTTOM TAB BAR
+════════════════════════════════════════════ */
+.tabbar{
+  flex-shrink:0;display:flex;
+  background:rgba(8,9,15,.97);
+  border-top:1px solid rgba(201,168,76,.12);
+  padding-bottom:var(--safe);
+  z-index:10;
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:.2rem;
+  padding:.6rem .25rem;cursor:pointer;
+  transition:color .18s,background .15s;
+  border-top:2px solid transparent;
+  color:var(--mu);position:relative;
+}
+.tab.on{color:var(--g);border-top-color:var(--g)}
+.tab .ti{font-size:1.3rem;line-height:1}
+.tab .tl{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.04em}
+.tab .tbdg{position:absolute;top:.3rem;right:calc(50% - .9rem);
+  width:8px;height:8px;border-radius:50%;background:var(--crg);
+  display:none;border:1.5px solid var(--bg);animation:pdot 1.3s ease infinite}
+.tab .tbdg.on{display:block}
+
+/* ════════════════════════════════════════════
+   PAGE CONTENT (scrollable area between topbar and tabbar)
+════════════════════════════════════════════ */
+.content{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  min-height:0;position:relative;
+  -webkit-overflow-scrolling:touch;
+}
+.page{display:none;flex-direction:column;min-height:100%;position:relative}
+.page.on{display:flex}
+/* Chat pages fill entire content area */
+.page-fill{position:absolute;inset:0;min-height:0}
+.page-fill.on{display:flex}
+
+/* ════════════════════════════════════════════
+   CARD DISPLAY (center stage)
+════════════════════════════════════════════ */
+.card-stage{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:1rem 1.5rem;gap:.75rem;
+}
+.stage-label{font-family:'Cinzel',serif;font-size:.7rem;
+  letter-spacing:.12em;color:var(--gd)}
+
+/* 3D card */
+.cscene{
+  perspective:900px;
+  width:min(200px,55vw);
+  aspect-ratio:2/3;cursor:pointer;
+  filter:drop-shadow(0 8px 30px rgba(201,168,76,.25));
+  animation:floatCard 3.5s ease-in-out infinite;
+}
+@keyframes floatCard{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.cscene:active{animation:none}
+.c3{width:100%;height:100%;position:relative;
+  transform-style:preserve-3d;
+  transition:transform .7s cubic-bezier(.4,0,.2,1)}
+.c3.flipped{transform:rotateY(180deg)}
+.cface{position:absolute;inset:0;backface-visibility:hidden;
+  border-radius:13px;overflow:hidden}
+.cface.front{
+  background:linear-gradient(160deg,#0d0e28,#1a1050,#0c0d24);
+  border:2px solid rgba(201,168,76,.5);
+  box-shadow:0 0 30px rgba(201,168,76,.3),inset 0 0 60px rgba(107,79,188,.1);
+}
+.cface.back{
+  transform:rotateY(180deg);
+  background:var(--sur2);
+  border:2px solid rgba(107,79,188,.4);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:.75rem;text-align:center;
+}
+.card-name{font-family:'Cinzel',serif;font-size:clamp(.9rem,3vw,1.1rem);
+  color:var(--gl);letter-spacing:.04em;text-align:center}
+.card-sub{font-size:.72rem;color:var(--mu);text-align:center}
+.flip-hint{font-size:.62rem;color:var(--mu)}
+
+/* ════════════════════════════════════════════
+   FAN VIEW (คำใบ้ของฉัน)
+════════════════════════════════════════════ */
+.fan-page{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;padding:1rem .75rem;gap:.75rem;overflow-y:auto;
+}
+.fan-wrap{
+  position:relative;width:100%;
+  flex-shrink:0;
+  overflow:visible;
+}
+/* ── DAILY TOPIC ── */
+#topic-banner{
+  background:linear-gradient(135deg,rgba(123,94,167,.18),rgba(123,94,167,.08));
+  border:1px solid rgba(123,94,167,.35);
+  border-radius:8px;padding:.55rem .85rem;margin-bottom:.75rem;
+  font-size:.78rem;color:var(--iv);line-height:1.5;
+  display:none;
+}
+#topic-banner .tb-label{
+  font-family:Cinzel,serif;font-size:.6rem;color:var(--pu,#9b72cf);
+  letter-spacing:.1em;display:block;margin-bottom:.2rem;
+}
+#topic-banner .tb-text{font-size:.85rem;color:var(--iv);font-style:italic;}
+@keyframes topicSlideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+/* ── TOPIC REVEAL MODAL ── */
+#topic-reveal-modal{
+  position:fixed;inset:0;z-index:200;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(4,5,14,.92);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;
+  transition:opacity .4s ease;
+}
+#topic-reveal-modal.show{opacity:1;pointer-events:all;}
+.trm-scroll{
+  background:linear-gradient(160deg,#1a1235,#0d0e28 50%,#1a1040);
+  border:2px solid rgba(201,168,76,.5);
+  border-radius:16px;
+  padding:2rem 1.75rem 1.5rem;
+  box-shadow:0 0 60px rgba(123,94,167,.35),0 20px 60px rgba(0,0,0,.8);
+  transform:scale(.85) translateY(24px);
+  opacity:0;
+  transition:transform .55s cubic-bezier(.34,1.45,.64,1),opacity .4s ease;
+  position:relative;overflow:hidden;
+  width:min(320px,86vw);text-align:center;
+}
+#topic-reveal-modal.show .trm-scroll{transform:scale(1) translateY(0);opacity:1;}
+.trm-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.trm-star{position:absolute;width:3px;height:3px;background:var(--g);border-radius:50%;opacity:0;}
+.trm-seal{font-size:2.6rem;display:block;margin-bottom:.75rem;
+  filter:drop-shadow(0 0 16px rgba(201,168,76,.6));
+  animation:sealPulse 2s ease infinite;}
+@keyframes sealPulse{0%,100%{filter:drop-shadow(0 0 12px rgba(201,168,76,.5))}
+  50%{filter:drop-shadow(0 0 24px rgba(201,168,76,.9));}}
+.trm-label{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.2em;
+  color:rgba(201,168,76,.55);margin-bottom:.4rem;display:block;}
+.trm-title{font-family:'Cinzel',serif;font-size:1rem;font-weight:700;letter-spacing:.12em;
+  background:linear-gradient(135deg,#e8d5a3,var(--g));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:.75rem;}
+.trm-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.4),transparent);margin:.6rem 0;}
+#trm-topic-wrap{overflow:hidden;max-height:0;transition:max-height .8s cubic-bezier(.4,0,.2,1);}
+#trm-topic-wrap.revealed{max-height:200px;}
+#trm-topic-text{font-family:'Crimson Pro',serif;font-size:1.2rem;font-style:italic;
+  color:#f0e6c8;line-height:1.55;padding:.5rem 0 1rem;
+  opacity:0;transform:translateY(8px);
+  transition:opacity .5s ease .6s,transform .5s ease .6s;}
+#trm-topic-wrap.revealed #trm-topic-text{opacity:1;transform:translateY(0);}
+.trm-btn{background:linear-gradient(135deg,#5a421a,var(--g),#5a421a);color:#070810;
+  font-family:'Cinzel',serif;font-weight:700;letter-spacing:.06em;border:none;cursor:pointer;
+  border-radius:10px;padding:.6rem 2rem;font-size:.85rem;
+  opacity:0;transition:opacity .4s ease 1.2s,filter .2s,transform .1s;}
+#topic-reveal-modal.show.ready .trm-btn{opacity:1;}
+.trm-btn:hover{filter:brightness(1.15)}.trm-btn:active{transform:scale(.96)}
+
+/* Admin topic modal */
+#topic-modal{position:fixed;inset:0;z-index:420;display:flex;align-items:center;
+  justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  opacity:0;pointer-events:none;transition:opacity .22s;}
+#topic-modal.show{opacity:1;pointer-events:all;}
+#topic-modal .tm-box{
+  background:var(--pan,#1a1f35);border:1px solid rgba(201,168,76,.25);
+  border-radius:14px;padding:1.3rem 1.4rem;width:92%;max-width:400px;
+  max-height:85vh;display:flex;flex-direction:column;gap:.7rem;
+}
+#topic-modal h3{font-family:Cinzel,serif;font-size:.88rem;color:var(--g);
+  letter-spacing:.1em;flex-shrink:0;}
+#topic-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:.35rem;}
+.topic-row{display:flex;align-items:center;gap:.5rem;
+  background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.1);
+  border-radius:7px;padding:.42rem .6rem;}
+.topic-row .tr-date{font-family:Cinzel,serif;font-size:.62rem;color:var(--gd,#c9a84c);
+  white-space:nowrap;flex-shrink:0;}
+.topic-row .tr-topic{flex:1;font-size:.8rem;color:var(--iv);}
+.topic-row .tr-today{font-size:.58rem;color:#6dbf8a;background:rgba(109,191,138,.12);
+  border:1px solid rgba(109,191,138,.3);border-radius:4px;padding:.1rem .35rem;flex-shrink:0;}
+.topic-row .tr-del{background:none;border:none;color:rgba(224,112,112,.5);
+  cursor:pointer;font-size:.82rem;flex-shrink:0;padding:.1rem .25rem;}
+.topic-row .tr-del:hover{color:#e07070;}
+
+/* ── DAILY TOPIC ── */
+#topic-banner{
+  background:linear-gradient(135deg,rgba(123,94,167,.18),rgba(123,94,167,.08));
+  border:1px solid rgba(123,94,167,.35);
+  border-radius:8px;padding:.55rem .85rem;margin-bottom:.75rem;
+  font-size:.78rem;color:var(--iv);line-height:1.5;display:none;
+}
+#topic-banner .tb-label{font-family:Cinzel,serif;font-size:.6rem;color:#9b72cf;
+  letter-spacing:.1em;display:block;margin-bottom:.2rem;}
+#topic-banner .tb-text{font-size:.85rem;color:var(--iv);font-style:italic;}
+.topic-row{display:flex;align-items:flex-start;gap:.6rem;
+  background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.12);
+  border-radius:9px;padding:.65rem .8rem;}
+.topic-row .tr-date{font-family:Cinzel,serif;font-size:.72rem;color:var(--gd);
+  white-space:nowrap;flex-shrink:0;padding-top:.1rem;min-width:90px;}
+.topic-row .tr-topic{flex:1;font-size:.88rem;color:var(--iv);line-height:1.45;word-break:break-word;}
+.topic-row .tr-today{font-size:.65rem;color:#6dbf8a;background:rgba(109,191,138,.12);
+  border:1px solid rgba(109,191,138,.3);border-radius:5px;padding:.15rem .45rem;
+  flex-shrink:0;white-space:nowrap;align-self:flex-start;}
+.topic-row .tr-del{background:none;border:none;color:rgba(224,112,112,.5);
+  cursor:pointer;font-size:1rem;flex-shrink:0;padding:.1rem .3rem;line-height:1;align-self:flex-start;}
+.topic-row .tr-del:hover{color:#e07070;}
+
+/* cards are absolutely positioned inside fan-wrap */
+.fc{
+  position:absolute;border-radius:10px;
+  border:1.5px solid rgba(201,168,76,.35);
+  background:linear-gradient(160deg,#0d0e28,#1a1050);
+  cursor:pointer;
+  transition:transform .2s ease,box-shadow .2s,border-color .2s;
+  transform-origin:50% 100%;
+  overflow:hidden;
+}
+.fc:hover,.fc.sel{
+  border-color:var(--g);
+  box-shadow:0 0 18px rgba(201,168,76,.5);
+  z-index:20!important;
+}
+.fc.dk{filter:brightness(.3);cursor:default}
+.clue-box{
+  width:100%;max-width:440px;
+  background:rgba(14,15,30,.9);
+  border:1px solid rgba(201,168,76,.2);
+  border-radius:12px;padding:1rem 1.25rem;
+  display:none;animation:fadeUp .3s ease both;
+}
+.clue-box.show{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ════════════════════════════════════════════
+   CHAT
+════════════════════════════════════════════ */
+.chat-page{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+/* When chat page is active, parent page fills content */
+.page.on .chat-page{display:flex}
+/* sub tabs inside chat */
+.chat-subtabs{
+  flex-shrink:0;display:flex;overflow-x:auto;
+  background:rgba(8,9,15,.95);
+  border-bottom:1px solid rgba(201,168,76,.12);
+  scrollbar-width:none;
+  position:sticky;top:0;z-index:5;
+  justify-content:center;  /* center tabs */
+}
+.chat-subtabs::-webkit-scrollbar{display:none}
+.cst{
+  flex-shrink:0;padding:.5rem .9rem;
+  font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.04em;
+  color:var(--mu);cursor:pointer;white-space:nowrap;
+  border-bottom:2px solid transparent;transition:color .18s,border-color .18s;
+  position:relative;
+}
+.cst.on{color:var(--g);border-color:var(--g)}
+.cst .cstdot{width:6px;height:6px;border-radius:50%;background:var(--crg);
+  position:absolute;top:.3rem;right:.35rem;display:none;animation:pdot 1.3s ease infinite}
+.cst .cstdot.on{display:block}
+
+.chat-msgs{
+  flex:1;overflow-y:auto;padding:.6rem;
+  display:flex;flex-direction:column;gap:.45rem;
+  -webkit-overflow-scrolling:touch;
+}
+.mrow{display:flex;gap:.4rem;align-items:flex-end}
+.mrow.me{flex-direction:row-reverse}
+.bbl{max-width:100%;padding:.5rem .8rem;border-radius:14px;
+  font-size:.875rem;line-height:1.42;word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap}
+.bbl.me{background:linear-gradient(135deg,var(--gd),#5a421a);
+  color:var(--iv);border-bottom-right-radius:3px}
+.bbl.ot{background:rgba(44,36,88,.85);color:var(--bd);
+  border:1px solid rgba(107,79,188,.25);border-bottom-left-radius:3px}
+.mn{font-size:.6rem;color:var(--mu);margin-bottom:.12rem}
+.mt{font-size:.57rem;color:var(--mu);margin-top:.08rem}
+.chat-inp-wrap{
+  flex-shrink:0;padding:.55rem .65rem;
+  padding-bottom:calc(.55rem + var(--safe));
+  background:rgba(7,8,15,.95);
+  border-top:1px solid rgba(201,168,76,.08);
+  display:flex;gap:.4rem;align-items:flex-end;
+  /* Stays above keyboard on iOS */
+  position:relative;z-index:5;
+}
+.chat-inp-wrap .inp{
+  flex:1;min-height:40px;max-height:96px;
+  border-radius:20px;padding:.5rem .9rem;
+  font-size:16px; /* must be ≥16px to prevent iOS auto-zoom */
+}
+
+/* ════════════════════════════════════════════
+   SENIOR MAILBOX (คำใบ้ tab)
+════════════════════════════════════════════ */
+.mail-page{
+  flex:1;overflow-y:auto;padding:.75rem;
+  display:flex;flex-direction:column;gap:.6rem;
+}
+.mail-item{
+  border-radius:12px;border:1px solid rgba(201,168,76,.2);
+  padding:.8rem 1rem;background:rgba(14,15,30,.7);
+  display:flex;align-items:center;gap:.75rem;cursor:pointer;
+  transition:border-color .2s,box-shadow .15s;
+}
+.mail-item:hover{border-color:var(--g);box-shadow:0 0 10px rgba(201,168,76,.15)}
+.mail-item.sched{opacity:.6;cursor:default}
+
+/* ════════════════════════════════════════════
+   ADMIN
+════════════════════════════════════════════ */
+.admin-page{
+  flex:1;overflow-y:auto;padding:.75rem;
+  display:flex;flex-direction:column;gap:.75rem;
+}
+.score-row{display:flex;align-items:center;gap:.5rem;
+  padding:.35rem 0;border-bottom:1px solid rgba(201,168,76,.06)}
+.sbar{flex:1;height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+.sfil{height:100%;background:linear-gradient(90deg,var(--gd),var(--g));
+  border-radius:3px;transition:width .6s ease}
+/* ── IN-APP NOTIFICATION BANNER ──────────────────────── */
+#notif-banner{
+  position:fixed;top:-90px;left:50%;transform:translateX(-50%);
+  width:min(380px,calc(100vw - 1.5rem));
+  background:linear-gradient(135deg,rgba(26,16,80,.96),rgba(13,26,58,.96));
+  border:1px solid rgba(201,168,76,.38);
+  border-radius:14px;
+  padding:.65rem .9rem;
+  z-index:300;cursor:pointer;
+  transition:top .38s cubic-bezier(.34,1.56,.64,1);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  display:flex;align-items:center;gap:.65rem;
+  box-shadow:0 6px 28px rgba(0,0,0,.55);
+  pointer-events:none;opacity:0;
+}
+#notif-banner.show{
+  top:calc(env(safe-area-inset-top,0px) + .6rem);
+  pointer-events:auto;opacity:1;
+}
+#notif-banner .nb-icon{font-size:1.25rem;flex-shrink:0}
+.nb-body{flex:1;min-width:0}
+#notif-banner .nb-from{font-size:.65rem;color:var(--gd);font-family:Cinzel,serif;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#notif-banner .nb-msg{font-size:.8rem;color:var(--iv);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem}
+#notif-banner .nb-x{flex-shrink:0;color:var(--mu);font-size:.85rem;padding:.15rem .3rem}
+
+/* Admin DM list — realtime */
+.dm-item{
+  display:flex;align-items:center;gap:.65rem;
+  padding:.65rem .85rem;border-radius:10px;cursor:pointer;
+  border:1px solid rgba(201,168,76,.12);
+  background:rgba(255,255,255,.03);transition:background .15s;
+  position:relative;
+}
+.dm-item:hover,.dm-item.on{background:rgba(201,168,76,.08);border-color:rgba(201,168,76,.25)}
+.dm-item .dm-unread{
+  position:absolute;top:.55rem;right:.7rem;
+  width:8px;height:8px;border-radius:50%;
+  background:#e03050;display:none;
+}
+.dm-item.has-unread .dm-unread{display:block}
+.dm-item .dm-preview{font-size:.65rem;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.15rem}
+.dm-item .dm-time{position:absolute;top:.55rem;right:1.5rem;font-size:.58rem;color:var(--gd)}
+
+/* ════════════════════════════════════════════
+   MODALS
+════════════════════════════════════════════ */
+.modal-bg{
+  position:fixed;inset:0;z-index:60;
+  background:rgba(4,5,14,.88);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;padding:1rem;
+}
+.modal-bg.on{display:flex}
+.modal-box{width:100%;max-width:420px;max-height:88vh;overflow-y:auto}
+/* Modal box should NOT blur — override .pan's backdrop-filter */
+.modal-box.pan{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgb(14,15,32);}
+.mbox-ani{animation:mIn .35s ease both}
+@keyframes mIn{from{opacity:0;transform:scale(.92) translateY(12px)}to{opacity:1;transform:none}}
+
+/* Compose bottom sheet */
+.sheet-bg{
+  position:fixed;inset:0;z-index:60;
+  background:rgba(0,0,0,.6);
+  display:none;align-items:flex-end;justify-content:center;
+}
+.sheet-bg.on{display:flex}
+.sheet{
+  width:100%;max-width:520px;
+  background:var(--sur2);
+  border:1px solid rgba(201,168,76,.2);
+  border-radius:20px 20px 0 0;
+  padding:1.25rem;
+  padding-bottom:calc(1.25rem + var(--safe));
+  animation:sheetUp .26s ease;
+}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+
+/* ════════════════════════════════════════════
+   ANNOUNCEMENT POPUP
+════════════════════════════════════════════ */
+.ann-bg{
+  position:fixed;inset:0;z-index:80;
+  background:rgba(5,6,15,.86);
+  display:none;align-items:center;justify-content:center;padding:1.5rem;
+}
+.ann-bg.on{display:flex}
+.ann-box{max-width:360px;width:100%;text-align:center;animation:mIn .5s ease both}
+.ann-icon{font-size:2.8rem;display:block;margin-bottom:.4rem;
+  filter:drop-shadow(0 0 20px rgba(201,168,76,.6))}
+
+/* Toast */
+#toast{position:fixed;bottom:calc(var(--bar) + var(--safe) + 1rem);left:50%;
+  transform:translateX(-50%);background:rgba(12,13,30,.97);
+  border:1px solid var(--gd);color:var(--iv);padding:.6rem 1.3rem;
+  border-radius:8px;font-size:.85rem;z-index:100;opacity:0;
+  transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+
+/* Misc */
+.loader{display:inline-block;width:20px;height:20px;
+  border:2.5px solid rgba(201,168,76,.15);border-top-color:var(--g);
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--gd);border-radius:2px}
+.sep{height:1px;background:rgba(201,168,76,.1);margin:.6rem 0}
+</style>
+</head>
+<body>
+
+<canvas id="star-canvas"></canvas>
+
+<!-- All Clues Modal -->
+<div id="all-clues-modal" class="modal-bg" onclick="if(event.target===this)closeModal('all-clues-modal')">
+  <div class="modal-box pan mbox-ani" style="padding:1.5rem;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <p class="hd" style="font-size:.88rem;color:var(--g)">📜 คำใบ้ทั้งหมด</p>
+      <button class="ib" onclick="closeModal('all-clues-modal')">✕</button>
+    </div>
+    <div class="gl" style="margin-bottom:.75rem"></div>
+    <div id="all-clues-list" style="display:flex;flex-direction:column;gap:.75rem"></div>
+  </div>
+</div>
+
+<!-- Guess Modal -->
+<div id="guess-modal" class="modal-bg" onclick="if(event.target===this)closeModal('guess-modal')">
+  <div class="modal-box pan mbox-ani" style="padding:1.5rem;text-align:center;max-width:340px">
+    <span style="font-size:2.2rem;display:block;margin-bottom:.35rem">🔮</span>
+    <p class="hd" style="font-size:.88rem;color:var(--g);margin-bottom:.4rem">ลองทายพี่รหัสดูสิ</p>
+    <!-- Hearts -->
+    <div id="guess-hearts" style="font-size:1.7rem;letter-spacing:.15rem;margin:.35rem 0">❤️❤️❤️</div>
+    <p id="guess-hearts-label" style="font-size:.68rem;color:var(--mu);margin-bottom:.6rem">มี 3 หัวใจ ใช้ให้คุ้มนะ</p>
+    <div class="gl" style="margin:.5rem 0 .75rem"></div>
+    <div id="guess-status" style="margin-bottom:.75rem;min-height:1em"></div>
+    <input id="guess-inp" class="inp" placeholder="กรอกชื่อพี่รหัส..." style="margin-bottom:.75rem;text-align:center;font-size:16px"/>
+    <p style="font-size:.68rem;color:var(--mu);margin-bottom:.75rem;text-align:center">* กรอกตามชื่อในลิสต์พี่รหัส</p>
+    <button class="bg w-full" onmousedown="event.preventDefault()" onclick="doGuess()" style="width:100%;padding:.65rem" id="guess-submit-btn">ทายเลย!</button>
+    <button class="bo" onclick="closeModal('guess-modal')" style="margin-top:.5rem;width:100%;padding:.5rem">ปิด</button>
+  </div>
+</div>
+
+<!-- Confetti canvas -->
+<!-- In-app notification banner -->
+<div id="notif-banner" onclick="_notifGo()">
+  <div class="nb-icon">💬</div>
+  <div class="nb-body">
+    <div class="nb-from" id="notif-from"></div>
+    <div class="nb-msg" id="notif-msg"></div>
+  </div>
+  <div class="nb-x" onclick="event.stopPropagation();_notifHide()">✕</div>
+</div>
+
+<canvas id="confetti-canvas" style="position:fixed;inset:0;z-index:500;pointer-events:none;display:none"></canvas>
+
+<!-- Password confirm modal -->
+<div id="pass-modal" class="modal-bg" onclick="if(event.target===this)closeModal('pass-modal')">
+  <div class="modal-box pan mbox-ani" style="padding:1.5rem;text-align:center;max-width:340px">
+    <p class="hd" style="font-size:.88rem;color:var(--g);margin-bottom:.6rem" id="pass-modal-title">กรอกรหัสยืนยัน</p>
+    <input id="pass-modal-inp" class="inp" type="password" placeholder="รหัสยืนยัน" style="margin-bottom:.75rem;text-align:center" onkeydown="if(event.key==='Enter')doPassConfirm()"/>
+    <button class="bg w-full" onclick="doPassConfirm()" style="width:100%;padding:.65rem">ยืนยัน</button>
+    <button class="bo" onclick="closeModal('pass-modal')" style="margin-top:.5rem;width:100%;padding:.5rem">ยกเลิก</button>
+  </div>
+</div>
+
+<!-- Topic Reveal Modal -->
+<div id="topic-reveal-modal">
+  <div id="topic-reveal-box">
+    <div class="trm-scroll">
+      <div class="trm-stars" id="trm-stars"></div>
+      <span class="trm-seal">🔮</span>
+      <span class="trm-label">✦ WHISPERING TAROT ✦</span>
+      <div class="trm-title">TOPIC วันนี้</div>
+      <div class="trm-divider"></div>
+      <div id="trm-topic-wrap">
+        <p id="trm-topic-text"></p>
+      </div>
+      <button class="trm-btn" id="trm-close-btn" onclick="closeTopicReveal()">รับทราบ ✦</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+<!-- ════════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════════ -->
+<div id="ls" class="scr">
+  <div class="lbox">
+    <div class="logo-wrap">
+      <span class="sig">🔮</span>
+      <h1>WHISPERING TAROT</h1>
+      <p>Unveil Your Destiny</p>
+    </div>
+    <div class="gl" style="margin-bottom:1.5rem"></div>
+    <label class="lbl">รหัสนักศึกษา</label>
+    <input id="l-id" class="inp" style="margin-bottom:1rem;height:50px" type="text"
+      autocomplete="username" inputmode="numeric" placeholder="Student ID"/>
+    <label class="lbl">รหัสผ่าน</label>
+    <div style="position:relative;margin-bottom:1.5rem">
+      <input id="l-pw" class="inp" style="height:50px;padding-right:3rem;box-sizing:border-box" type="password"
+        autocomplete="current-password" placeholder="Password"/>
+      <button type="button" id="pw-eye-btn" onclick="togglePw()" tabindex="-1"
+        style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);
+          background:none;border:none;cursor:pointer;padding:.25rem;
+          color:var(--gd);font-size:1.1rem;line-height:1;user-select:none"
+        title="แสดง/ซ่อนรหัสผ่าน">👁️</button>
+    </div>
+    <button class="bg w-full" onclick="doLogin()" style="width:100%;height:52px;font-size:.95rem">
+      เข้าสู่ระบบ
+    </button>
+    <p id="l-err" style="color:var(--crg);font-size:.82rem;text-align:center;margin-top:.75rem;min-height:1.1em"></p>
+    <div id="l-sp" style="display:none;justify-content:center;margin-top:.5rem">
+      <div class="loader"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     JUNIOR SCREEN
+════════════════════════════════════════ -->
+<div id="js" class="scr">
+  <div class="topbar">
+    <button type="button" onclick="openHelpModal('junior')" tabindex="-1"
+      style="width:2.5rem;height:2.5rem;background:none;border:none;cursor:pointer;
+        color:var(--gd);font-size:1rem;display:flex;align-items:center;justify-content:center;
+        border-radius:50%;transition:background .15s;flex-shrink:0"
+      onmouseenter="this.style.background='rgba(201,168,76,.1)'" onmouseleave="this.style.background='none'"
+      title="วิธีใช้">❓</button>
+    <div class="tb-center">
+      <div class="tb-title" id="j-title">✦ WHISPERING TAROT ✦</div>
+      <div class="tb-sub" id="j-sub"></div>
+    </div>
+    <button class="bo" style="font-size:.72rem;padding:.38rem .65rem" onclick="doLogout()">Logout</button>
+  </div>
+  <div class="content" id="j-content">
+    <!-- PAGE: ไพ่ -->
+    <div class="page on" id="jp-card">
+      <div class="card-stage">
+        <div class="stage-label">✦ WHISPERING TAROT ✦</div>
+        <div class="cscene" onclick="flipCard('jc3')">
+          <div class="c3" id="jc3">
+            <div class="cface front" id="j-cf"></div>
+            <div class="cface back"  id="j-cb">
+              <p style="font-size:.75rem;color:var(--mu)">รอคำใบ้จากพี่รหัส...</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-name" id="j-cname"></div>
+        <div class="card-sub"  id="j-csub"></div>
+        <div class="flip-hint">แตะไพ่เพื่อพลิก</div>
+        <button class="bo" id="guess-btn" onclick="openGuess()"
+          style="margin-top:.75rem;padding:.5rem 1.2rem;font-size:.82rem">
+          👀 ลองทายพี่รหัส
+        </button>
+      </div>
+    </div>
+    <!-- PAGE: คำใบ้ -->
+    <div class="page" id="jp-clues">
+      <div class="fan-page">
+        <p class="hd" style="font-size:.72rem;letter-spacing:.1em;color:var(--gd)">เลือกไพ่เพื่อดูคำใบ้</p>
+        <div class="fan-wrap" id="fan-wrap"></div>
+        <button class="bg" id="read-all-btn" onclick="openAllClues()"
+          style="display:none;margin-top:.5rem;padding:.6rem 1.5rem">
+          📜 อ่านคำใบ้ทั้งหมด
+        </button>
+      </div>
+    </div>
+    <!-- PAGE: แชท -->
+    <div class="page page-fill" id="jp-chat">
+      <div class="chat-page">
+        <div class="chat-subtabs" id="j-chat-tabs"></div>
+        <div class="chat-msgs" id="j-chat-msgs"></div>
+        <div class="chat-inp-wrap">
+          <textarea id="j-chat-inp" class="inp" rows="1" placeholder="พิมพ์ข้อความ..."
+            oninput="autoH(this)"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();jSendChat()}"></textarea>
+          <button class="bg" style="padding:.45rem .85rem;font-size:.85rem;border-radius:10px"
+            onmousedown="event.preventDefault()" onclick="jSendChat()">ส่ง</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tabbar" id="j-tabbar">
+    <div class="tab on" onclick="jTab('card',this)"><div class="ti">🃏</div><div class="tl">ไพ่</div></div>
+    <div class="tab" onclick="jTab('clues',this)"><div class="ti">✨</div><div class="tl">คำใบ้</div><div class="tbdg" id="j-clue-dot"></div></div>
+    <div class="tab" onclick="jTab('chat',this)"><div class="ti">💬</div><div class="tl">แชท</div><div class="tbdg" id="j-chat-dot"></div></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SENIOR SCREEN
+════════════════════════════════════════ -->
+<div id="ss" class="scr">
+  <div class="topbar">
+    <button type="button" onclick="openHelpModal('senior')" tabindex="-1"
+      style="width:2.5rem;height:2.5rem;background:none;border:none;cursor:pointer;
+        color:var(--gd);font-size:1rem;display:flex;align-items:center;justify-content:center;
+        border-radius:50%;transition:background .15s;flex-shrink:0"
+      onmouseenter="this.style.background='rgba(201,168,76,.1)'" onmouseleave="this.style.background='none'"
+      title="วิธีใช้">❓</button>
+    <div class="tb-center">
+      <div class="tb-title" id="s-title">✦ WHISPERING TAROT ✦</div>
+      <div class="tb-sub" id="s-sub"></div>
+    </div>
+    <button class="bo" style="font-size:.72rem;padding:.38rem .65rem" onclick="doLogout()">Logout</button>
+  </div>
+  <div class="content" id="s-content">
+    <!-- PAGE: ไพ่ -->
+    <div class="page on" id="sp-card">
+      <div class="card-stage">
+        <div class="stage-label">✦ WHISPERING TAROT ✦</div>
+        <div class="cscene" onclick="flipCard('sc3')">
+          <div class="c3" id="sc3">
+            <div class="cface front" id="s-cf"></div>
+            <div class="cface back"  id="s-cb">
+              <p style="font-size:.75rem;color:var(--mu)">กำลังโหลด...</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-name" id="s-cname"></div>
+        <div class="card-sub"  id="s-csub"></div>
+        <div class="flip-hint">แตะไพ่เพื่อพลิก</div>
+        <button class="bg" id="s-send-btn" onclick="openCompose()" style="margin-top:.75rem">
+          ✉ ส่งคำใบ้
+        </button>
+      </div>
+    </div>
+    <!-- PAGE: คำใบ้ที่ส่งไป -->
+    <div class="page" id="sp-mail">
+      <div class="mail-page" id="s-mail-list">
+        <div style="display:flex;justify-content:center;padding:2rem"><div class="loader"></div></div>
+      </div>
+    </div>
+    <!-- PAGE: แชท -->
+    <div class="page page-fill" id="sp-chat">
+      <div class="chat-page">
+        <div class="chat-subtabs" id="s-chat-tabs"></div>
+        <div class="chat-msgs" id="s-chat-msgs"></div>
+        <div class="chat-inp-wrap">
+          <textarea id="s-chat-inp" class="inp" rows="1" placeholder="พิมพ์ข้อความ..."
+            oninput="autoH(this)"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sSendChat()}"></textarea>
+          <button class="bg" style="padding:.45rem .85rem;font-size:.85rem;border-radius:10px"
+            onmousedown="event.preventDefault()" onclick="sSendChat()">ส่ง</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <div class="tab on" onclick="sTab('card',this)"><div class="ti">🃏</div><div class="tl">ไพ่</div></div>
+    <div class="tab" onclick="sTab('mail',this)"><div class="ti">✉</div><div class="tl">คำใบ้</div></div>
+    <div class="tab" onclick="sTab('chat',this)"><div class="ti">💬</div><div class="tl">แชท</div><div class="tbdg" id="s-chat-dot"></div></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ADMIN SCREEN
+════════════════════════════════════════ -->
+<div id="as" class="scr">
+  <div class="topbar">
+    <div style="width:2.5rem"></div>
+    <div class="tb-center">
+      <div class="tb-title">✦ ADMIN — WHISPERING TAROT ✦</div>
+    </div>
+    <button class="bo" style="font-size:.72rem;padding:.38rem .65rem" onclick="doLogout()">Logout</button>
+  </div>
+  <div class="content">
+    <!-- PAGE: ประกาศ+Matrix -->
+    <div class="page on" id="ap-announce">
+      <div class="admin-page">
+        <div class="pan" style="padding:1.25rem 1.5rem">
+          <p class="hd" style="font-size:.78rem;color:var(--g);margin-bottom:.25rem">🔮 The Oracle</p>
+          <p style="font-size:.72rem;color:var(--mu);margin-bottom:.75rem">ส่งประกาศ Pop-up ถึงทุกคนพร้อมกัน</p>
+          <input id="a-at" class="inp" placeholder="หัวข้อประกาศ" style="margin-bottom:.6rem"/>
+          <textarea id="a-am" class="inp" rows="3" placeholder="ข้อความ..." style="margin-bottom:.75rem"></textarea>
+          <div style="display:flex;gap:.5rem">
+            <button class="bg w-full" onclick="aSendAnn()" style="flex:1;padding:.65rem">📡 ส่งประกาศ</button>
+            <button class="bo" onclick="aDeleteAnn()" style="padding:.65rem .9rem;color:var(--crg);border-color:rgba(192,37,58,.3)" title="ลบประกาศออก">🗑</button>
+          </div>
+          <div id="a-ann-preview" style="margin-top:.65rem;padding:.5rem .75rem;border-radius:8px;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.1);display:none">
+            <p style="font-size:.62rem;color:var(--gd);margin-bottom:.2rem">ประกาศปัจจุบัน:</p>
+            <p id="a-ann-preview-title" style="font-size:.75rem;color:var(--g);font-weight:600"></p>
+            <p id="a-ann-preview-msg" style="font-size:.72rem;color:var(--mu);margin-top:.15rem"></p>
+          </div>
+        </div>
+        <!-- Daily Topic -->
+        <div class="pan" style="padding:1.25rem 1.5rem;margin-top:.75rem">
+          <p class="hd" style="font-size:.78rem;color:var(--g);margin-bottom:.25rem">📅 Daily Topic</p>
+          <p style="font-size:.72rem;color:var(--mu);margin-bottom:.85rem">กำหนดหัวข้อให้พี่รหัสส่งคำใบ้ตาม theme เดียวกัน</p>
+          <div style="display:flex;gap:.5rem;margin-bottom:.5rem">
+            <input id="topic-date-inp" type="date" class="inp" style="flex:0 0 auto;width:145px;font-size:15px;"/>
+            <input id="topic-text-inp" class="inp" placeholder="หัวข้อ/คำถาม..." maxlength="120"
+              style="flex:1;font-size:15px;" onkeydown="if(event.key==='Enter')saveTopic()"/>
+          </div>
+          <button class="bg w-full" onclick="saveTopic()" style="width:100%;padding:.65rem;margin-bottom:.85rem">💾 บันทึก Topic</button>
+          <div id="topic-list-inline" style="display:flex;flex-direction:column;gap:.4rem;max-height:320px;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
+        </div>
+<!-- date moved to settings -->
+      </div>
+    </div>
+    <!-- PAGE: แชทกับทุกคน -->
+    <div class="page page-fill" id="ap-chat">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden">
+      <!-- Sub-tabs: Juniors | Seniors | Global -->
+      <div class="chat-subtabs" id="adm-chat-subtabs" style="flex-shrink:0">
+        <div class="cst on" onclick="admChatSubTab('juniors',this)">น้อง</div>
+        <div class="cst" onclick="admChatSubTab('seniors',this)">พี่</div>
+        <div class="cst" onclick="admChatSubTab('global',this)">แชทรวม 🌐</div>
+      </div>
+      <!-- Sub-pages -->
+      <div style="flex:1;overflow-y:auto;padding:.75rem;min-height:0" id="adm-sub-juniors">
+        <div style="display:flex;flex-direction:column;gap:.4rem" id="adm-junior-list"></div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:.75rem;display:none;min-height:0" id="adm-sub-seniors">
+        <div style="display:flex;flex-direction:column;gap:.4rem" id="adm-senior-list"></div>
+      </div>
+      <div style="flex:1;display:none;flex-direction:column;min-height:0;overflow:hidden" id="adm-sub-global">
+        <div class="chat-msgs" id="adm-global-msgs" style="flex:1;min-height:0"></div>
+        <div style="flex-shrink:0;padding:.5rem .75rem;padding-bottom:calc(.5rem + var(--safe));border-top:1px solid rgba(201,168,76,.08);background:rgba(6,7,16,.9);display:flex;gap:.4rem;align-items:flex-end">
+          <textarea id="adm-global-inp" class="inp" rows="1" placeholder="ส่งข้อความ..."
+            oninput="autoH(this)"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();admGlobalSend()}"
+            style="flex:1;font-size:16px;min-height:38px;max-height:90px;border-radius:18px;padding:.5rem .9rem"></textarea>
+          <button class="bg" style="padding:.45rem .85rem;font-size:.85rem;border-radius:10px;flex-shrink:0"
+            onmousedown="event.preventDefault()" onclick="admGlobalSend()">ส่ง</button>
+        </div>
+      </div>
+      </div>
+    </div>
+    <!-- PAGE: สถิติ -->
+    <div class="page" id="ap-score">
+      <div class="admin-page">
+        <!-- Closeness score button -->
+        <button class="bg w-full" onclick="openScoreModal()" style="width:100%;padding:.75rem;font-size:.88rem">🏆 ดูค่าความสนิท</button>
+        <!-- Guess leaderboard button -->
+        <button class="bg w-full" onclick="openGuessModal()" style="width:100%;padding:.75rem;font-size:.88rem;background:linear-gradient(135deg,var(--pu),var(--pug));color:#fff">🎯 ดูผลทายพี่รหัส</button>
+        <!-- Bonds Overview button -->
+        <button class="bg w-full" onclick="openMatrixModal()" style="width:100%;padding:.75rem;font-size:.88rem;background:linear-gradient(135deg,#1a3a2a,#2d6b4f);color:#a0e0b8">📊 ดูภาพรวมสายรหัส</button>
+      </div>
+    </div>
+
+    <!-- PAGE: ตั้งค่า -->
+    <div class="page" id="ap-settings">
+      <div class="admin-page">
+        <!-- Start date -->
+        <div class="pan" style="padding:1rem 1.5rem">
+          <p class="hd" style="font-size:.78rem;color:var(--g);margin-bottom:.6rem">⏱ ตั้งวันเริ่มกิจกรรม</p>
+          <input id="a-date" class="inp" type="date" style="margin-bottom:.6rem"/>
+          <button class="bg w-full" onclick="aSetDate()" style="width:100%;padding:.6rem">บันทึก</button>
+        </div>
+        <!-- Clear chats -->
+        <div class="pan" style="padding:1rem 1.5rem">
+          <p class="hd" style="font-size:.78rem;color:var(--g);margin-bottom:.3rem">🗑 เคลียร์แชท Firebase</p>
+          <p style="font-size:.72rem;color:var(--mu);margin-bottom:.75rem">ลบข้อความทั้งหมดในทุกห้องแชท</p>
+          <div style="display:grid;gap:.5rem">
+            <button class="bo" onclick="clearChatRoom('global')" style="padding:.55rem">🌐 ล้างแชทรวม</button>
+            <button class="bo" onclick="clearChatRoomAll()" style="padding:.55rem">⚠️ ล้างแชท DM ทั้งหมด</button>
+            <button class="bo" onclick="openTopicModal()" style="padding:.55rem">📅 Daily Topic</button>
+          </div>
+        </div>
+        <!-- Reset guess -->
+        <div class="pan" style="padding:1rem 1.5rem">
+          <p class="hd" style="font-size:.78rem;color:var(--g);margin-bottom:.3rem">🎯 รีเซ็ตระบบทายพี่รหัส</p>
+          <p style="font-size:.72rem;color:var(--mu);margin-bottom:.75rem">ล้างสถิติและคูลดาวน์ทั้งหมด</p>
+          <button class="bo" onclick="resetGuess()" style="padding:.55rem;width:100%">รีเซ็ต</button>
+        </div>
+        <!-- Force sync -->
+        <div class="pan" style="padding:1rem 1.5rem">
+          <p class="hd" style="font-size:.78rem;color:var(--g);margin-bottom:.3rem">🔄 Sync ข้อมูล</p>
+          <p style="font-size:.72rem;color:var(--mu);margin-bottom:.75rem">รีโหลด Matrix และข้อมูลจาก Sheet ทันที</p>
+          <button class="bg w-full" onclick="aForceSync()" style="width:100%;padding:.6rem">↻ Sync ทันที</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <div class="tab on" onclick="aTab('announce',this)"><div class="ti">📡</div><div class="tl">ประกาศ</div></div>
+    <div class="tab" onclick="aTab('chat',this)"><div class="ti">💬</div><div class="tl">แชท</div></div>
+    <div class="tab" onclick="aTab('score',this)"><div class="ti">🏆</div><div class="tl">สถิติ</div></div>
+    <div class="tab" onclick="aTab('settings',this)"><div class="ti">⚙️</div><div class="tl">ตั้งค่า</div></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SHARED MODALS
+════════════════════════════════════════ -->
+<!-- Score modal -->
+<div id="score-modal" class="modal-bg" onclick="if(event.target===this)closeModal('score-modal')">
+  <div class="modal-box pan mbox-ani" style="padding:1.5rem;max-height:85vh;overflow-y:auto;max-width:min(540px,calc(100vw - 2rem))">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <p class="hd" style="font-size:.88rem;color:var(--g)">🏆 ค่าความสนิท</p>
+      <div style="display:flex;gap:.4rem">
+        <button class="bo" style="font-size:.7rem;padding:.3rem .6rem" onclick="aLoadScores()">↻</button>
+        <button class="ib" onclick="closeModal('score-modal')">✕</button>
+      </div>
+    </div>
+    <div class="gl" style="margin-bottom:.75rem"></div>
+    <div id="a-sc"><div style="display:flex;justify-content:center;padding:1rem"><div class="loader"></div></div></div>
+  </div>
+</div>
+
+<!-- Guess leaderboard modal -->
+<div id="guess-board-modal" class="modal-bg" onclick="if(event.target===this)closeModal('guess-board-modal')">
+  <div class="modal-box pan mbox-ani" style="padding:1.5rem;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <p class="hd" style="font-size:.88rem;color:var(--g)">🎯 ผลทายพี่รหัส</p>
+      <div style="display:flex;gap:.4rem">
+        <button class="bo" style="font-size:.7rem;padding:.3rem .6rem" onclick="aLoadGuessBoard()">↻</button>
+        <button class="ib" onclick="closeModal('guess-board-modal')">✕</button>
+      </div>
+    </div>
+    <div class="gl" style="margin-bottom:.75rem"></div>
+    <div id="a-guess"><p style="color:var(--mu);font-size:.78rem;text-align:center">กำลังโหลด...</p></div>
+  </div>
+</div>
+
+<!-- Bonds Overview modal -->
+<div id="matrix-modal" class="modal-bg" onclick="if(event.target===this)closeModal('matrix-modal')">
+  <div class="modal-box pan mbox-ani" style="padding:1.5rem;max-height:85vh;overflow-y:auto;max-width:min(560px,calc(100vw - 2rem))">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <p class="hd" style="font-size:.88rem;color:var(--g)">📊 ดูภาพรวมสายรหัส</p>
+      <div style="display:flex;gap:.4rem">
+        <button class="bo" style="font-size:.7rem;padding:.3rem .6rem" onclick="aLoadMatrix()">↻</button>
+        <button class="ib" onclick="closeModal('matrix-modal')">✕</button>
+      </div>
+    </div>
+    <div class="gl" style="margin-bottom:.75rem"></div>
+    <div id="a-mx"><div style="display:flex;justify-content:center;padding:1rem"><div class="loader"></div></div></div>
+  </div>
+</div>
+
+<!-- Help modal -->
+<div id="help-modal" class="modal-bg" onclick="if(event.target===this)closeModal('help-modal')">
+  <div class="modal-box pan mbox-ani" style="padding:1.5rem;max-height:85vh;overflow-y:auto;max-width:min(500px,calc(100vw - 2rem))">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <p class="hd" style="font-size:.9rem;color:var(--g)" id="help-title">❓ วิธีใช้</p>
+      <button class="ib" onclick="closeModal('help-modal')">✕</button>
+    </div>
+    <div class="gl" style="margin-bottom:1rem"></div>
+    <div id="help-content" style="display:flex;flex-direction:column;gap:.65rem"></div>
+  </div>
+</div>
+
+<!-- Letter detail (junior reads clue) -->
+<div id="letter-modal" class="modal-bg" onclick="if(event.target===this)closeModal('letter-modal')">
+  <div class="modal-box pan mbox-ani" style="padding:1.5rem" id="letter-modal-body"></div>
+</div>
+
+<!-- Sent letter detail (senior views) -->
+<div id="sent-modal" class="modal-bg" onclick="if(event.target===this)closeModal('sent-modal')">
+  <div class="modal-box pan mbox-ani" style="padding:1.5rem" id="sent-modal-body"></div>
+</div>
+
+<!-- Card detail modal (big card flip) -->
+<div id="card-modal" class="modal-bg" onclick="if(event.target===this)closeModal('card-modal')">
+  <div id="card-modal-inner" style="display:flex;flex-direction:column;align-items:center;gap:.65rem;width:100%;max-width:320px">
+    <p class="hd" id="card-modal-label" style="font-size:.72rem;color:var(--gd);letter-spacing:.1em"></p>
+    <div style="width:min(220px,62vw);aspect-ratio:2/3;perspective:900px;cursor:pointer" onclick="event.stopPropagation()">
+      <div class="c3" id="card-modal-3d" onclick="flipCard('card-modal-3d')">
+        <div class="cface front" id="card-modal-front" style="background:linear-gradient(160deg,#0d0e28,#1a1050);border:2px solid var(--g);box-shadow:0 0 30px rgba(201,168,76,.4)"></div>
+        <div class="cface back"  id="card-modal-back"  style="background:var(--sur2);border:2px solid rgba(107,79,188,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;text-align:center"></div>
+      </div>
+    </div>
+    <p style="font-size:.62rem;color:var(--mu)">แตะไพ่เพื่อพลิก</p>
+  </div>
+</div>
+
+<!-- Admin DM popup -->
+<div id="adm-chat-modal" class="modal-bg" onclick="if(event.target===this)closeModal('adm-chat-modal')">
+  <div class="pan mbox-ani" style="width:100%;max-width:420px;height:min(560px,85vh);display:flex;flex-direction:column;overflow:hidden" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 1rem;border-bottom:1px solid rgba(201,168,76,.1);flex-shrink:0">
+      <p class="hd" style="font-size:.78rem;color:var(--g)" id="adm-modal-title">💬 แชท</p>
+      <button class="ib" onclick="closeModal('adm-chat-modal')">✕</button>
+    </div>
+    <div class="chat-msgs" id="adm-chat-msgs" style="flex:1;min-height:0"></div>
+    <div style="padding:.5rem .75rem;padding-bottom:calc(.5rem + var(--safe));border-top:1px solid rgba(201,168,76,.08);background:rgba(6,7,16,.9);flex-shrink:0;display:flex;gap:.4rem;align-items:flex-end">
+      <textarea id="adm-chat-inp" class="inp" rows="1" placeholder="ส่งข้อความ..."
+        oninput="autoH(this)"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();admSendChat()}"
+        style="flex:1;font-size:16px;min-height:38px;max-height:90px;border-radius:18px;padding:.5rem .9rem"></textarea>
+      <button class="bg" style="padding:.45rem .85rem;font-size:.85rem;border-radius:10px"
+        onmousedown="event.preventDefault()" onclick="admSendChat()">ส่ง</button>
+    </div>
+  </div>
+</div>
+
+<!-- Compose sheet -->
+<div id="compose" class="sheet-bg" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+      <p class="hd" style="font-size:.88rem;color:var(--g)">✉ ส่งคำใบ้</p>
+      <button class="ib" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="gl" style="margin-bottom:.75rem"></div>
+    <div id="topic-banner">
+      <span class="tb-label">✦ TOPIC วันนี้</span>
+      <span class="tb-text" id="topic-banner-text"></span>
+    </div>
+    <textarea id="compose-txt" class="inp" rows="4" placeholder="เขียนคำใบ้..."></textarea>
+    <div id="sdt-wrap" style="display:none;margin:.65rem 0">
+      <label class="lbl">วันและเวลาที่ต้องการส่ง</label>
+      <input id="compose-dt" class="inp" type="datetime-local"/>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.85rem;align-items:center">
+      <button class="bg" id="send-now-btn" onclick="doSend(false)" style="flex:1;padding:.65rem">📮 ส่งเลย</button>
+      <button class="bo" onclick="toggleSdt()" id="sdt-btn" style="padding:.5rem .7rem">⏰</button>
+      <button class="bg" id="sched-btn" onclick="doSend(true)" style="display:none;padding:.65rem;background:linear-gradient(135deg,var(--pu),var(--pug))">📅 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Topic Modal (Admin) -->
+<div id="topic-modal" onclick="if(event.target===this)closeTopicModal()">
+  <div class="tm-box">
+    <h3>📅 จัดการ Daily Topic</h3>
+    <!-- Add/Edit row -->
+    <div style="display:flex;flex-direction:column;gap:.4rem;flex-shrink:0;
+      border-bottom:1px solid rgba(201,168,76,.12);padding-bottom:.7rem;">
+      <div style="display:flex;gap:.4rem;">
+        <input id="topic-date-inp" type="date" class="inp" style="font-size:14px;flex:0 0 auto;width:140px;"/>
+        <input id="topic-text-inp" class="inp" placeholder="หัวข้อ/คำถาม..." maxlength="120"
+          style="font-size:15px;flex:1;"
+          onkeydown="if(event.key==='Enter')saveTopic()"/>
+      </div>
+      <button class="bg w-full" onclick="saveTopic()" style="padding:.5rem;font-size:.82rem;">💾 บันทึก Topic</button>
+    </div>
+    <!-- Topic list -->
+    <div id="topic-list"></div>
+    <button class="bo" style="font-size:.75rem;padding:.4rem;flex-shrink:0;" onclick="closeTopicModal()">ปิด</button>
+  </div>
+</div>
+
+<!-- Announcement popup -->
+<div id="ann-bg" class="ann-bg">
+  <div class="ann-box pan" style="padding:1.5rem">
+    <span class="ann-icon">🔮</span>
+    <p class="hd" style="font-size:.88rem;color:var(--g);margin-bottom:.4rem" id="ann-title"></p>
+    <div class="gl" style="margin:.6rem 0"></div>
+    <p class="bd" style="font-size:1rem;color:var(--iv);line-height:1.7;white-space:pre-wrap;font-style:italic" id="ann-msg"></p>
+    <div class="gl" style="margin:.85rem 0"></div>
+    <button class="bg w-full" onclick="closeAnn()" style="width:100%;padding:.65rem">ปิด</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════ -->
+<script>
+// ════════════════════════════════════════════════
+// CONFIG — ตั้งค่า GAS URL ตรงนี้
+// Deploy Code.gs เป็น Web App แล้วใส่ URL ด้านล่าง
+// ════════════════════════════════════════════════
+
+// ── STATE ──────────────────────────────────────────
+var S={}, letters=[], fbDB=null, fbApp=null;
+var fbListeners={}, msgIds={}, spamBuf=[];
+var annSeenTs=localStorage.getItem('wt_ann')||'0';
+var _shownAnnTs=annSeenTs; // track what we've shown this session
+var pollTimer;
+var sdtOpen=false;
+var selFanCard=null;  // currently selected fan card num
+
+// Chat state per-role
+var jChatType='peer';  // junior active chat tab
+var sChatType='peer';  // senior active chat tab
+var admChatTarot='';
+
+// ── UTILS ───────────────────────────────────────────
+function $(id){return document.getElementById(id)}
+// ── GAS API URL — เปลี่ยนเป็น URL ของ GAS Web App ──────────
+var GAS_URL = 'https://script.google.com/u/0/home/projects/1V_bwqurKJGxM6meHxom7O8RkrNWw6HAoaYbz_BVezBxwjA6bpEQIxcSp/edit';
+
+function gsr(fn, args, ok, eb) {
+  // GAS Web App API call — deploy as "Anyone can access"
+  fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ fn: fn, args: args || [] }),
+    redirect: 'follow'
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) { if (ok) ok(data); })
+  .catch(function(err) {
+    if (eb) eb(err);
+    else toast('❌ ' + (err.message || 'เชื่อมต่อไม่ได้'));
+  });
+}
+// ── ANONYMOUS NAME GENERATOR ─────────────────────────
+// Generates "พี่ #XX" or "น้อง #XX" — consistent per uid, role-aware
+var _anonCache={};
+function getAnonName(uid,role){
+  var key=uid+'|'+(role||'');
+  if(_anonCache[key])return _anonCache[key];
+  var h=0;for(var i=0;i<uid.length;i++){h=(h*31+uid.charCodeAt(i))>>>0;}
+  var num=(h%90)+10; // 10-99, avoids single digit
+  var prefix=(role==='senior')?'พี่':'น้อง';
+  var name=prefix+' #'+num;
+  _anonCache[key]=name;
+  return name;
+}
+
+function toast(msg,dur){
+  dur=dur||2800;var t=$('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},dur);
+}
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br/>');
+}
+function fmtDT(iso){
+  if(!iso)return'';
+  try{var d=new Date(iso);
+    return d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})+' '+
+           d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
+  catch(e){return'';}
+}
+function autoH(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+function showOnly(id){
+  ['ls','js','ss','as'].forEach(function(s){
+    var e=$(s);if(!e)return;
+    var on=s===id;e.style.display=on?'flex':'none';e.classList.toggle('on',on);
+  });
+}
+function closeModal(id){
+  var e=$(id);if(e)e.classList.remove('on');
+  if(id==='guess-modal'&&_cooldownInterval){clearInterval(_cooldownInterval);_cooldownInterval=null;}
+}
+function openModal(id){var e=$(id);if(e)e.classList.add('on');}
+function closeSheet(){$('compose').classList.remove('on');}
+
+// ── TAB SWITCHING ──────────────────────────────────
+function jTab(name,el){
+  ['card','clues','chat'].forEach(function(p){
+    var pg=$('jp-'+p);if(pg){pg.style.display='none';pg.classList.remove('on');}
+  });
+  var pg=$('jp-'+name);
+  if(pg){
+    pg.style.display='flex';
+    pg.classList.add('on');
+  }
+  document.querySelectorAll('#j-tabbar .tab').forEach(function(t){t.classList.remove('on');});
+  if(el)el.classList.add('on');
+  if(name==='chat'){
+    $('j-chat-dot').classList.remove('on');
+    loadChat('j');
+  }
+  if(name==='clues'){
+    $('j-clue-dot').classList.remove('on');
+    renderFanView();
+  }
+}
+function sTab(name,el){
+  ['card','mail','chat'].forEach(function(p){
+    var pg=$('sp-'+p);if(pg){pg.style.display='none';pg.classList.remove('on');}
+  });
+  var pg=$('sp-'+name);
+  if(pg){
+    pg.style.display='flex';
+    pg.classList.add('on');
+  }
+  document.querySelectorAll('#ss .tabbar .tab').forEach(function(t){t.classList.remove('on');});
+  if(el)el.classList.add('on');
+  if(name==='mail') loadSeniorMail();
+  if(name==='chat'){
+    $('s-chat-dot').classList.remove('on');
+    loadChat('s');
+  }
+}
+function aTab(name,el){
+  ['announce','chat','score','settings'].forEach(function(p){
+    var pg=$('ap-'+p);if(pg){pg.style.display='none';pg.classList.remove('on');}
+  });
+  var pg=$('ap-'+name);if(pg){pg.style.display='flex';pg.classList.add('on');}
+  document.querySelectorAll('#as .tabbar .tab').forEach(function(t){t.classList.remove('on');});
+  if(el)el.classList.add('on');
+  if(name==='score'){aLoadScores();aLoadGuessBoard();}
+  if(name==='chat'){buildAdminChatLists();}
+  if(name==='announce'){
+    // Show current active announcement if any
+    gsr('getLatestAnnTs',[],function(r){
+      if(r&&r.ts&&r.ts!=='0'){
+        // Fetch full ann to show preview
+        gsr('pollUpdates',[S.id,S.pass,0,'0'],function(res){
+          if(res&&res.announcement){
+            _updateAnnPreview(res.announcement.title,res.announcement.message);
+          }
+        });
+      } else {
+        _updateAnnPreview('','');
+      }
+    });
+  }
+}
+
+// ── AUTH ────────────────────────────────────────────
+// ── HELP MODAL ────────────────────────────────────────
+var HELP={
+  junior:[
+    {icon:'🃏',t:'ไพ่ประจำตัว',b:'ไพ่ใบนี้คือไพ่ประจำตัวของน้องเองซึ่งเป็นตัวที่เชื่อมน้องกับพี่รหัสไว้ น้องสามารถกดที่ไพ่เพื่ออ่านคำใบ้ข้างหลังได้'},
+    {icon:'✨',t:'แท็บคำใบ้',b:'ดูคำใบ้ล่าสุดและคำใบ้อื่นๆที่ได้รับ กด "อ่านคำใบ้ทั้งหมด" เพื่อดูคำใบ้รวมในหน้าเดียว'},
+    {icon:'💬',t:'ช่องแชท',b:'พูดคุยกับพี่รหัสรวมถึงแอดมินแบบส่วนตัว ชื่อของน้องจะแสดงเป็นชื่อไพ่ของน้องแทน'},
+    {icon:'🌐',t:'แชทรวม (ไม่ระบุตัวตน)',b:'ห้องแชทสำหรับทุกคน ชื่อจะแสดงเป็น "พี่ #XX" และ "น้อง #XX" รู้แค่ว่าคนนั้นเป็นพี่หรือน้อง แต่ไม่รู้ว่าคือใคร 🤫'},
+    {icon:'🎯',t:'ทายพี่รหัส',b:'น้องสามารถทายพี่รหัสได้ 3 ครั้งตลอดการเล่น ถ้าทายถูกคนแรก จะมี... ไม่บอกหรอก อิอิ 👀 ปล.แต่พี่รหัสจะไม่รู้นะว่าเราทายถูก ถ้าน้องทายถูก พี่ฝากน้องปั่นพี่ๆเค้าหน่อยนะ555'},
+    {icon:'🔔',t:'การแจ้งเตือน',b:'เมื่อมีข้อความใหม่จะมีจุดแดงที่แท็บแชท และ banner แจ้งเตือนด้านบน'},
+    {icon:'🔄',t:'รีเฟรช',b:'ถ้ารู้สึกว่าแชทไม่โหลดหรืออะไรหายไป ให้รีเฟรชหน้าเพจ 1 ที แล้วทุกอย่างก็จะกลับมาเป็นปกติเองน้า'}
+  ],
+  senior:[
+    {icon:'🃏',t:'ส่งคำใบ้',b:'เขียนคำใบ้ให้น้องรหัสในแท็บ "คำใบ้" กำหนดวันที่และเวลาที่ต้องการส่งได้ สามารถส่งคำใบ้ไปก่อนล่วงหน้าได้หลายใบเลย'},
+    {icon:'💬',t:'ช่องแชท',b:'พูดคุยกับน้องรหัสรวมถึงแอดมินแบบส่วนตัว ชื่อของเราจะแสดงเป็นชื่อไพ่ของเราแทน'},
+    {icon:'🌐',t:'แชทรวม (ไม่ระบุตัวตน)',b:'ห้องแชทสำหรับทุกคน ชื่อจะแสดงเป็น "พี่ #XX" และ "น้อง #XX" รู้แค่ว่าคนนั้นเป็นพี่หรือน้อง แต่ไม่รู้ว่าคือใคร อย่าโป๊ะแล้วกัน555 🤫'},
+    {icon:'🔔',t:'การแจ้งเตือน',b:'เมื่อมีข้อความใหม่จะมีจุดแดงที่แท็บแชท และ banner แจ้งเตือนด้านบน'},
+    {icon:'🤫',t:'อุ๊บอิ๊บไว้ก่อน',b:'ย้ำ! การแสดงตัวในแชทรวมอาจทำให้น้องรู้ตัวได้นะจ๊ะ 🤭'},
+    {icon:'🔄',t:'รีเฟรช',b:'ถ้ารู้สึกว่าแชทไม่โหลดหรืออะไรหายไป ให้รีเฟรชหน้าเพจ 1 ที แล้วทุกอย่างก็จะกลับมาเป็นปกติเองน้า'}
+  ]
+};
+function openHelpModal(role){
+  var data=HELP[role]||[];
+  $('help-title').textContent=role==='junior'?'❓ วิธีใช้':'❓ วิธีใช้';
+  $('help-content').innerHTML=data.map(function(d){
+    return '<div style="padding:.7rem .85rem;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.13);border-radius:10px">'
+      +'<div style="display:flex;align-items:center;gap:.45rem;margin-bottom:.3rem">'
+        +'<span style="font-size:1rem">'+d.icon+'</span>'
+        +'<span class="hd" style="font-size:.78rem;color:var(--g)">'+d.t+'</span>'
+      +'</div>'
+      +'<p style="font-size:.8rem;color:var(--bd);line-height:1.6;margin:0">'+d.b+'</p>'
+      +'</div>';
+  }).join('');
+  openModal('help-modal');
+}
+
+// ── PASSWORD TOGGLE ───────────────────────────────────
+function togglePw(){
+  var inp=$('l-pw'),btn=$('pw-eye-btn');if(!inp||!btn)return;
+  if(inp.type==='password'){inp.type='text';btn.textContent='👁️‍🗨️';}
+  else{inp.type='password';btn.textContent='👁️';}
+}
+
+function doLogin(){
+  var u=$('l-id').value.trim(),p=$('l-pw').value.trim();
+  if(!u||!p){$('l-err').textContent='กรุณากรอกข้อมูลให้ครบ';return;}
+  $('l-err').textContent='';
+  $('l-sp').style.display='flex';
+  gsr('handleLogin',[u,p],function(res){
+    $('l-sp').style.display='none';
+    if(!res.success){$('l-err').textContent=res.message||'เกิดข้อผิดพลาด';return;}
+    S=Object.assign({},res);S.id=u;S.pass=p;
+    localStorage.setItem('wt_s',JSON.stringify(S));
+    localStorage.setItem('wt_uid',u);
+    // Per-user announcement: load seen ts so new device won't re-show old announcements
+    var userAnnKey='wt_ann_'+u;
+    var storedUserAnn=localStorage.getItem(userAnnKey);
+    if(storedUserAnn){
+      annSeenTs=storedUserAnn;_shownAnnTs=storedUserAnn;
+    } else {
+      // New device: silently fetch & mark current announcement as already seen
+      gsr('getLatestAnnTs',[],function(r){
+        if(r&&r.ts&&r.ts!=='0'){
+          annSeenTs=r.ts;_shownAnnTs=r.ts;
+          localStorage.setItem('wt_ann',r.ts);
+          localStorage.setItem(userAnnKey,r.ts);
+        }
+      },{});
+    }
+    if(res.fbConfig) initFirebase(res.fbConfig);
+    bootRole();
+  },function(e){$('l-sp').style.display='none';$('l-err').textContent='❌ '+e.message;});
+}
+$('l-pw').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+$('l-id').addEventListener('keydown',function(e){if(e.key==='Enter')$('l-pw').focus();});
+// Autofill last id
+(function(){var id=localStorage.getItem('wt_uid');if(id&&$('l-id'))$('l-id').value=id;})();
+
+function doLogout(){
+  clearInterval(pollTimer);
+  Object.values(fbListeners).forEach(function(fn){try{fn();}catch(e){}});
+  Object.values(_admRoomListeners).forEach(function(fn){try{fn();}catch(e){}});
+  fbListeners={};_admRoomListeners={};_admPairs=[];_admUnread={};_admLastMsg={};msgIds={};spamBuf=[];
+  if(fbDB){try{fbDB.goOffline();}catch(e){}}
+  fbDB=null;fbApp=null;S={};letters=[];selFanCard=null;
+  // Clear all UI so next user sees clean state
+  var toClear=['fan-wrap','j-chat-msgs','s-chat-msgs','j-cb',
+    'adm-global-msgs','adm-chat-msgs','adm-junior-list','adm-senior-list','a-mx','a-sc'];
+  toClear.forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='';});
+  // Reset junior card back to locked state
+  var jcf=document.getElementById('j-cf');if(jcf)jcf.innerHTML='';
+  var jcname=document.getElementById('j-cname');if(jcname)jcname.textContent='';
+  var jcsub=document.getElementById('j-csub');if(jcsub)jcsub.textContent='';
+  localStorage.removeItem('wt_s');
+  showOnly('ls');
+}
+
+function bootRole(){
+  if(S.role==='admin'){showOnly('as');initAdmin();}
+  else if(S.role==='senior'){showOnly('ss');initSenior();}
+  else{showOnly('js');initJunior();}
+}
+
+// Session restore
+document.addEventListener('DOMContentLoaded',function(){
+  var sv=localStorage.getItem('wt_s');
+  if(sv){try{
+    S=JSON.parse(sv);
+    if(S.role&&S.fbConfig){
+      initFirebase(S.fbConfig);
+      showOnly(S.role==='admin'?'as':S.role==='senior'?'ss':'js');
+      bootRole();return;
+    }
+  }catch(e){}}
+  showOnly('ls');
+});
+
+// ── FIREBASE ────────────────────────────────────────
+function initFirebase(cfg){
+  try{
+    if(!cfg||!cfg.databaseURL)return;
+    fbApp=firebase.apps.length?firebase.apps[0]:firebase.initializeApp(cfg);
+    fbDB=firebase.database(fbApp);
+    _startFbConnectWatcher();
+  }catch(e){console.error('FB:',e);}
+}
+
+// ── FIREBASE AUTO-RECONNECT ───────────────────────────
+var _fbWasConnected=false;
+var _fbConnectRef=null;
+function _startFbConnectWatcher(){
+  if(!fbDB)return;
+  if(_fbConnectRef){try{_fbConnectRef.off();}catch(e){}}
+  _fbConnectRef=fbDB.ref('.info/connected');
+  _fbConnectRef.on('value',function(snap){
+    var online=!!snap.val();
+    if(online){
+      if(_fbWasConnected){
+        // Reconnected — re-subscribe silently (no banner/toast)
+        try{
+          if(S.role==='junior')  loadChat('j');
+          if(S.role==='senior')  loadChat('s');
+          if(S.role==='admin'){
+            if(fbDB) fbSub('global','adm-global-msgs','admin','Admin',function(){return 'Admin';},null);
+            if(fbDB&&_admPairs&&_admPairs.length) _startAdmRoomWatchers();
+          }
+        }catch(e){console.warn('FB reconnect:',e);}
+      }
+      _fbWasConnected=true;
+    } else {
+      _fbWasConnected=true;
+    }
+  });
+}
+
+// ── IN-APP NOTIFICATION SYSTEM ────────────────────────
+var _notifTimer=null;
+var _notifGoFn=null;
+
+function _notifShow(icon,from,msg,goFn){
+  $('notif-from').textContent=from;
+  $('notif-msg').textContent=msg;
+  var nb=$('notif-banner');
+  nb.querySelector('.nb-icon').textContent=icon||'💬';
+  _notifGoFn=goFn||null;
+  nb.classList.add('show');
+  if(_notifTimer)clearTimeout(_notifTimer);
+  _notifTimer=setTimeout(_notifHide,4000);
+}
+function _notifHide(){
+  $('notif-banner').classList.remove('show');
+  if(_notifTimer)clearTimeout(_notifTimer);
+  _notifTimer=null;
+}
+function _notifGo(){
+  _notifHide();
+  if(_notifGoFn)_notifGoFn();
+}
+
+function fbSub(roomKey,elId,myRole,myName,getPeer,onNewMsg){
+  if(!fbDB)return;
+  var key=roomKey.replace(/[^a-zA-Z0-9_]/g,'_');
+  var ref=fbDB.ref('chats/'+key);
+  if(fbListeners[elId]){fbListeners[elId]();delete fbListeners[elId];}
+  if(!msgIds[roomKey])msgIds[roomKey]=new Set();
+  var ids=msgIds[roomKey];
+  var el=$(elId);if(!el)return;
+
+  var q=ref.orderByChild('ts').limitToLast(100);
+  var init=false;
+  var h=q.on('value',function(snap){
+    if(!init){
+      init=true;
+      var all=[];
+      snap.forEach(function(c){all.push(Object.assign({key:c.key},c.val()));});
+      all.sort(function(a,b){return a.ts-b.ts;});
+      el.innerHTML='';ids.clear();
+      all.forEach(function(m){appendBubble(el,m,myRole,myName,getPeer,roomKey);ids.add(m.key);});
+      el.scrollTop=el.scrollHeight;
+      return;
+    }
+    snap.forEach(function(c){
+      if(!ids.has(c.key)){
+        ids.add(c.key);
+        var m=Object.assign({key:c.key},c.val());
+        appendBubble(el,m,myRole,myName,getPeer,roomKey);
+        el.scrollTop=el.scrollHeight;
+        // Fire notification for new non-self messages
+        var isSelf=m.uid?(m.uid===S.id):(m.role===myRole&&myRole!=='');
+        if(!isSelf&&onNewMsg)onNewMsg(m);
+      }
+    });
+  });
+  fbListeners[elId]=function(){q.off('value',h);};
+}
+
+function appendBubble(el,m,myRole,myName,getPeer,roomKey){
+  if(!m||!m.msg)return;
+  el.querySelectorAll('.empty-msg').forEach(function(e){e.remove();});
+  // Use uid for self-detection (works across all chat types correctly)
+  var isSelf = m.uid ? (m.uid===S.id) : (m.role===myRole&&myRole!=='');
+  var dn='';
+  if(roomKey==='global'){
+    // dname already set to "Tarot Senior/Junior" by sender
+    dn=m.dname||m.role;
+  } else if(roomKey.indexOf('admin__')===0){
+    dn=m.role==='admin'?'Admin':(m.dname||getPeer()||'');
+  } else {
+    // Peer DM: use dname if available, else derive from role
+    if(isSelf){
+      dn=m.dname||myName;
+    } else {
+      // Show peer's tarot + role label
+      dn=m.dname||(myRole==='junior'?(S.tarot+' Senior'):(S.tarot+' Junior'));
+    }
+  }
+  var div=document.createElement('div');
+  div.className='mrow '+(isSelf?'me':'');
+  div.dataset.id=m.key;
+  var wrapStyle=isSelf
+    ?'max-width:78%;display:flex;flex-direction:column;align-items:flex-end'
+    :'max-width:78%';
+  div.innerHTML='<div style="'+wrapStyle+'"><div class="mn '+(isSelf?'text-right':'')+'">'+esc(dn)+'</div>'
+    +'<div class="bbl '+(isSelf?'me':'ot')+'">'+esc(m.msg)+'</div>'
+    +'<div class="mt '+(isSelf?'text-right':'')+'">'+fmtDT(new Date(m.ts).toISOString())+'</div></div>';
+  el.appendChild(div);
+}
+
+function fbSend(roomKey,msg,role,dname){
+  if(!fbDB){toast('⚠️ Firebase ยังไม่ได้ตั้งค่า');return false;}
+  var now=Date.now();
+  spamBuf=spamBuf.filter(function(x){return now-x.ts<8000;});
+  var rc=spamBuf.filter(function(x){return x.msg===msg&&x.room===roomKey;});
+  if(rc.length>=3){toast('⚠️ ข้อความซ้ำเกินไป');return false;}
+  var key=roomKey.replace(/[^a-zA-Z0-9_]/g,'_');
+  fbDB.ref('chats/'+key).push({msg:msg,role:role,dname:dname,uid:S.id||'',ts:now});
+  spamBuf.push({msg:msg,room:roomKey,ts:now});
+  gsr('recordChatMessage',[S.id,S.pass,'peer'],function(){},{});
+  return true;
+}
+
+// ── CARD 3D FLIP ────────────────────────────────────
+function flipCard(id){var c=$(id);if(c)c.classList.toggle('flipped');}
+
+// ── TAROT SVG ────────────────────────────────────────
+function tarotSVG(name, centerLabel){
+  var lbl=String(centerLabel||name||'').slice(0,22);
+  return '<svg viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">'
+    +'<defs><radialGradient id="tg" cx="50%" cy="38%" r="65%">'
+    +'<stop offset="0%" stop-color="#1a1050"/><stop offset="100%" stop-color="#090a1a"/>'
+    +'</radialGradient><filter id="gf"><feGaussianBlur stdDeviation="1.5" result="b"/>'
+    +'<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>'
+    +'<rect width="100" height="150" fill="url(#tg)"/>'
+    +'<rect x="2.5" y="2.5" width="95" height="145" rx="9.5" fill="none" stroke="rgba(201,168,76,.55)" stroke-width=".8"/>'
+    +'<rect x="5" y="5" width="90" height="140" rx="8" fill="none" stroke="rgba(201,168,76,.2)" stroke-width=".4"/>'
+    +'<text x="7" y="12" font-size="5" fill="rgba(201,168,76,.4)">&#10022;</text>'
+    +'<text x="88" y="12" font-size="5" fill="rgba(201,168,76,.4)">&#10022;</text>'
+    +'<text x="7" y="145" font-size="5" fill="rgba(201,168,76,.4)">&#10022;</text>'
+    +'<text x="88" y="145" font-size="5" fill="rgba(201,168,76,.4)">&#10022;</text>'
+    +'<circle cx="50" cy="22" r="3" fill="rgba(201,168,76,.6)" filter="url(#gf)"/>'
+    +'<text x="50" y="60" text-anchor="middle" dominant-baseline="central" font-family="serif" font-size="6" fill="rgba(201,168,76,.9)" font-style="italic">'+esc(lbl)+'</text>'
+    +'<line x1="18" y1="65" x2="82" y2="65" stroke="rgba(201,168,76,.25)" stroke-width=".5"/>'
+    +'<text x="50" y="97" text-anchor="middle" dominant-baseline="central" font-size="26" fill="rgba(201,168,76,.82)" filter="url(#gf)">&#9733;</text>'
+    +'<text x="50" y="136" text-anchor="middle" font-family="serif" font-size="3.2" fill="rgba(201,168,76,.32)" font-style="italic">"The universe whispers its secrets"</text>'
+    +'</svg>';
+}
+
+function miniCardSVG(released){
+  var stroke=released?'.48':'.18';
+  var fill=released?'.7':'.25';
+  return '<svg viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:6px">'
+    +'<rect width="100" height="150" rx="8" fill="#0d0e28"/>'
+    +'<rect x="3" y="3" width="94" height="144" rx="7" fill="none" stroke="rgba(201,168,76,'+stroke+')" stroke-width="1.2"/>'
+    +'<text x="50" y="82" text-anchor="middle" dominant-baseline="central" font-size="22" fill="rgba(201,168,76,'+fill+')">&#9733;</text>'
+    +(released?'':'<text x="50" y="110" text-anchor="middle" font-size="10" fill="rgba(107,79,188,.55)">&#9200;</text>')
+    +'</svg>';
+}
+
+// ── JUNIOR INIT ─────────────────────────────────────
+function initJunior(){
+  $('j-title').textContent='✦ '+S.tarot+' ✦';
+  $('j-sub').textContent=S.name||'';
+  $('j-cf').innerHTML=tarotSVG(S.tarot,S.tarot);
+  $('j-cname').textContent=S.tarot||'';
+  buildJuniorChatTabs();
+  loadJuniorData();
+  startPoll();
+  // Show daily topic reveal (once per day)
+  setTimeout(maybeShowTopicReveal, 400);
+}
+
+function buildJuniorChatTabs(){
+  var tabs=$('j-chat-tabs'); tabs.innerHTML='';
+  [['peer','พี่รหัส'],['admin','Admin'],['global','แชทรวม 🌐']].forEach(function(ct){
+    var d=document.createElement('div');
+    d.className='cst'+(ct[0]===jChatType?' on':'');
+    d.dataset.ct=ct[0];
+    d.innerHTML=ct[1]+'<span class="cstdot" id="jcst-'+ct[0]+'"></span>';
+    d.onclick=function(){
+      jChatType=ct[0];
+      document.querySelectorAll('#j-chat-tabs .cst').forEach(function(t){t.classList.remove('on');});
+      d.classList.add('on');
+      $('j-chat-msgs').innerHTML='';
+      loadChat('j');
+    };
+    tabs.appendChild(d);
+  });
+}
+
+function loadJuniorData(){
+  gsr('juniorGetMailbox',[S.id,S.pass],function(res){
+    if(!res.success)return;
+    letters=res.letters||[];
+    var unlocked=letters.filter(function(l){return !l.locked;});updateReadAllBtn();
+    if(unlocked.length){
+      var last=unlocked[unlocked.length-1];
+      $('j-cb').innerHTML='<p class="hd" style="font-size:.62rem;color:var(--gd);letter-spacing:.08em;margin-bottom:.4rem">คำใบ้ #'+last.card_number+'</p>'
+        +'<div class="gl" style="width:80%;margin-bottom:.6rem"></div>'
+        +'<p class="bd" style="font-size:.88rem;color:var(--bd);line-height:1.6;font-style:italic;white-space:pre-wrap">'+esc(last.message||'')+'</p>';
+      $('j-csub').textContent='คำใบ้ #'+last.card_number;
+    } else {
+      $('j-csub').textContent='';
+    }
+  });
+}
+
+function renderFanView(){
+  var wrap=$('fan-wrap');
+  wrap.innerHTML='';
+  if(!letters.length){
+    wrap.innerHTML='<p style="color:var(--mu);font-size:.85rem;text-align:center;padding:2rem">ยังไม่มีไพ่</p>';
+    return;
+  }
+  var unlocked=letters.filter(function(l){return !l.locked;});
+  var locked=letters.filter(function(l){return l.locked;});
+  var all=unlocked.concat(locked);
+
+  // Responsive card sizing — target ~10 per row max, with gaps
+  var availW=wrap.parentElement?wrap.parentElement.offsetWidth||window.innerWidth:window.innerWidth;
+  var GAP=8; // gap between cards px
+  var MAX_COLS=Math.min(10,all.length);
+  // Calculate card width that fits MAX_COLS with gaps
+  var cardW=Math.floor((availW - GAP*(MAX_COLS+1)) / MAX_COLS);
+  cardW=Math.max(52,Math.min(96,cardW)); // clamp 52–96px
+  var cardH=Math.round(cardW*1.52);
+  // Recalculate how many actually fit
+  var COLS=Math.min(all.length,Math.max(1,Math.floor((availW - GAP) / (cardW + GAP))));
+  COLS=Math.min(COLS,10);
+
+  wrap.style.cssText='width:100%;display:flex;flex-direction:column;align-items:center;'
+    +'gap:'+GAP+'px;padding:'+GAP+'px;box-sizing:border-box;';
+
+  for(var rowStart=0;rowStart<all.length;rowStart+=COLS){
+    var rowCards=all.slice(rowStart,rowStart+COLS);
+    var rowDiv=document.createElement('div');
+    rowDiv.style.cssText='display:flex;flex-direction:row;align-items:stretch;'
+      +'justify-content:center;gap:'+GAP+'px;width:100%;';
+
+    rowCards.forEach(function(l,i){
+      var d=document.createElement('div');
+      d.style.cssText='flex-shrink:0;width:'+cardW+'px;height:'+cardH+'px;'
+        +'border-radius:10px;border:1.5px solid rgba(201,168,76,'+(l.locked?'.15':'.45')+');'
+        +'background:linear-gradient(160deg,#0d0e28,#1a1050);'
+        +'cursor:'+(l.locked?'default':'pointer')+';'
+        +'position:relative;z-index:'+(i+1)+';'
+        +'transition:transform .18s ease,box-shadow .18s;'
+        +'display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;';
+
+      d.innerHTML='<svg viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">'
+        +'<rect width="100" height="150" rx="8" fill="#0b0c20"/>'
+        +'<rect x="3" y="3" width="94" height="144" rx="7" fill="none" stroke="rgba(201,168,76,'+(l.locked?'.15':'.4')+')" stroke-width="1.2"/>'
+        +(l.locked
+          ?'<text x="50" y="80" text-anchor="middle" dominant-baseline="central" font-size="18" fill="rgba(192,37,58,.5)">&#x1F512;</text>'
+          :'<text x="50" y="68" text-anchor="middle" dominant-baseline="central" font-size="4.5" fill="rgba(201,168,76,.75)" font-style="italic">'+String(l.message||'').slice(0,12)+'...</text>'
+           +'<text x="50" y="92" text-anchor="middle" dominant-baseline="central" font-size="22" fill="rgba(201,168,76,.7)">&#9733;</text>')
+        +'<text x="50" y="135" text-anchor="middle" font-size="6" fill="rgba(201,168,76,.6)">#'+(rowStart+i+1)+'</text>'
+        +'</svg>';
+
+      if(!l.locked){
+        d.dataset.zi=i+1;
+        d.onmouseenter=function(){
+          this.style.transform='translateY(-8px) scale(1.04)';
+          this.style.zIndex='30';
+          this.style.boxShadow='0 6px 20px rgba(201,168,76,.45)';
+          this.style.borderColor='var(--g)';
+        };
+        d.onmouseleave=function(){
+          this.style.transform='';
+          this.style.zIndex=(parseInt(this.dataset.zi)||1)+'';
+          this.style.boxShadow='';
+          this.style.borderColor='rgba(201,168,76,.45)';
+        };
+        (function(l2){
+          d.onclick=function(){
+            openCardModal(l2.card_number,l2.message,l2.created_at);
+            gsr('juniorOpenLetter',[S.id,S.pass],function(){},{});
+          };
+        })(l);
+      }
+      rowDiv.appendChild(d);
+    });
+    wrap.appendChild(rowDiv);
+  }
+  selFanCard=null;
+}
+
+// Add @keyframes for fan
+var _fanStyle=document.createElement('style');
+_fanStyle.textContent='@keyframes fanSlideIn{from{opacity:0;transform-origin:50% 100%;transform:translateX(-60px) rotate(-10deg)}to{opacity:1}}';
+document.head.appendChild(_fanStyle);
+
+function openCardModal(num,msg,createdAt){
+  $('card-modal-label').textContent='คำใบ้ #'+num+'';
+  $('card-modal-front').innerHTML=tarotSVG(S.tarot,S.tarot);
+  $('card-modal-back').innerHTML='<p class="hd" style="font-size:.62rem;color:var(--gd);letter-spacing:.08em;margin-bottom:.4rem">คำใบ้ #'+num+'</p>'
+    +'<div class="gl" style="width:80%;margin-bottom:.65rem"></div>'
+    +'<p class="bd" style="font-size:.88rem;color:var(--bd);line-height:1.6;font-style:italic;white-space:pre-wrap">'+esc(msg||'')+'</p>'
+    +'<p style="font-size:.6rem;color:var(--mu);margin-top:.5rem">'+fmtDT(createdAt)+'</p>';
+  $('card-modal-3d').classList.remove('flipped');
+  openModal('card-modal');
+}
+
+// ── JUNIOR CHAT ──────────────────────────────────────
+function loadChat(who){
+  var ct=who==='j'?jChatType:sChatType;
+  var elId=who+'-chat-msgs';
+  // Senior DM with admin uses 'senior__' prefix to keep separate from junior's room
+  var room;
+  if(ct==='peer') room=S.tarot;
+  else if(ct==='admin') room='admin__'+(who==='s'?'senior__':'')+S.tarot.replace(/[^a-zA-Z0-9_-]/g,'_')+(who==='j'&&S.id?('__'+String(S.id).replace(/[^a-zA-Z0-9_-]/g,'_')):'');
+  else room='global';
+  var peer=function(){return who==='j'?(S.seniorName||'พี่รหัส'):(S.juniorName||'น้องรหัส');};
+  if(!fbDB){$(elId).innerHTML='<p class="empty-msg" style="color:var(--mu);font-size:.82rem;text-align:center;padding:2rem">Firebase ยังไม่ได้ตั้งค่า</p>';return;}
+
+  function onNewMsg(m){
+    var chatOpen=who==='j'?
+      (document.getElementById('jp-chat')&&document.getElementById('jp-chat').classList.contains('on')):
+      (document.getElementById('sp-chat')&&document.getElementById('sp-chat').classList.contains('on'));
+    if(!chatOpen){
+      var dotId=who==='j'?'j-chat-dot':'s-chat-dot';
+      $(dotId).classList.add('on');
+    }
+    var fromName=m.dname||peer()||'ข้อความใหม่';
+    var icon=ct==='global'?'🌐':'💬';
+    var goFn=function(){
+      if(who==='j'){jTab('chat',document.querySelector('#j-tabbar .tab:nth-child(3)'));}
+      else{sTab('chat',document.querySelector('#s-tabbar .tab:nth-child(3)'));}
+    };
+    _notifShow(icon,'✦ '+fromName,m.msg||'',goFn);
+  }
+
+  fbSub(room,elId,S.role,S.name,peer,onNewMsg);
+}
+
+function jSendChat(){
+  var inp=$('j-chat-inp'),msg=inp.value.trim();if(!msg)return;
+  var jAdminRoom='admin__'+S.tarot.replace(/[^a-zA-Z0-9_-]/g,'_')+(S.id?('__'+String(S.id).replace(/[^a-zA-Z0-9_-]/g,'_')):'');
+  var room=jChatType==='peer'?S.tarot:jChatType==='admin'?jAdminRoom:'global';
+  var dn;
+  if(jChatType==='global') dn=getAnonName(S.id||S.tarot,'junior');
+  else if(jChatType==='peer') dn=S.tarot+' Junior ('+S.name+')'; // S.name already has "น้อง" prefix
+  else dn=S.tarot+' Junior ('+S.name+')'; // admin DM: show name for admin to identify
+  if(fbSend(room,msg,S.role,dn)){inp.value='';inp.style.height='auto';inp.focus();}
+}
+
+// ── SENIOR INIT ──────────────────────────────────────
+function initSenior(){
+  $('s-title').textContent='✦ '+S.tarot+' ✦';
+  $('s-sub').textContent=S.name||'';
+  $('s-cf').innerHTML=tarotSVG(S.tarot,S.tarot);
+  $('s-cname').textContent=S.tarot||'';
+  buildSeniorChatTabs();
+  loadSeniorCard();
+  startPoll();
+  // Watch for junior guess notification
+  watchGuessNotify();
+  // Show daily topic reveal (once per day)
+  setTimeout(maybeShowTopicReveal, 400);
+}
+function watchGuessNotify(){
+  if(!fbDB||!S.tarot)return;
+  var notifKey='guess_notify_'+S.tarot.replace(/[^a-zA-Z0-9_]/g,'_');
+  fbDB.ref('notifications/'+notifKey).on('value',function(snap){
+    var v=snap.val();
+    if(!v||v.seen)return;
+    // Mark as seen
+    fbDB.ref('notifications/'+notifKey).update({seen:true});
+    // Show notification
+    var nm=v.juniorName||'น้อง';
+    showSeniorGuessAlert(nm);
+  });
+}
+function showSeniorGuessAlert(juniorName){
+  var existing=document.getElementById('guess-alert-modal');
+  if(existing)existing.remove();
+  var ov=document.createElement('div');
+  ov.id='guess-alert-modal';
+  ov.className='modal-bg on';
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  var inner=document.createElement('div');
+  inner.className='pan mbox-ani';
+  inner.style.cssText='max-width:320px;width:100%;padding:2rem;text-align:center';
+  inner.onclick=function(e){e.stopPropagation();};
+  var closeBtn=document.createElement('button');
+  closeBtn.className='bg w-full';
+  closeBtn.style.cssText='width:100%;padding:.65rem';
+  closeBtn.textContent='รับทราบ 😮';
+  closeBtn.onclick=function(){ov.remove();};
+  inner.innerHTML='<div style="font-size:3rem;margin-bottom:.5rem">👀</div>'
+    +'<p class="hd" style="font-size:1rem;color:var(--gl);margin-bottom:.4rem">ว้าา โดนน้องเจอตัวละสิ 👀</p>'
+    +'<p style="font-size:.88rem;color:var(--iv);margin-bottom:1rem">'+esc(juniorName)+' ทายพี่รหัสถูกแล้ว!</p>'
+    +'<div class="gl" style="margin-bottom:1rem"></div>';
+  inner.appendChild(closeBtn);
+  ov.appendChild(inner);
+  document.body.appendChild(ov);
+}
+
+function buildSeniorChatTabs(){
+  var tabs=$('s-chat-tabs'); tabs.innerHTML='';
+  [['peer','น้องรหัส'],['admin','Admin'],['global','แชทรวม 🌐']].forEach(function(ct){
+    var d=document.createElement('div');
+    d.className='cst'+(ct[0]===sChatType?' on':'');
+    d.dataset.ct=ct[0];
+    d.innerHTML=ct[1]+'<span class="cstdot" id="scst-'+ct[0]+'"></span>';
+    d.onclick=function(){
+      sChatType=ct[0];
+      document.querySelectorAll('#s-chat-tabs .cst').forEach(function(t){t.classList.remove('on');});
+      d.classList.add('on');
+      $('s-chat-msgs').innerHTML='';
+      loadChat('s');
+    };
+    tabs.appendChild(d);
+  });
+}
+
+function loadSeniorCard(){
+  gsr('seniorGetMailbox',[S.id,S.pass],function(res){
+    if(!res.success)return;
+    letters=res.letters||[];
+    S.juniorName=res.juniorName||'?';
+    $('s-cb').innerHTML='<p class="hd" style="font-size:.65rem;color:var(--gd);margin-bottom:.35rem">น้องรหัส</p>'
+      +'<div class="gl" style="width:80%;margin-bottom:.6rem"></div>'
+      +'<p style="font-size:1rem;color:var(--iv)">'+esc(S.juniorName)+'</p>'
+      +'<p style="font-size:.7rem;color:var(--mu);margin-top:.4rem">ส่งไปแล้ว '+letters.filter(function(l){return l.released;}).length+'/'+letters.length+' ใบ</p>';
+    $('s-csub').textContent='น้องรหัส: '+S.juniorName;
+  });
+}
+
+function loadSeniorMail(){
+  var ml=$('s-mail-list');
+  ml.innerHTML='<div style="display:flex;justify-content:center;padding:2rem"><div class="loader"></div></div>';
+  gsr('seniorGetMailbox',[S.id,S.pass],function(res){
+    if(!res.success){ml.innerHTML='<p style="color:var(--mu);padding:1rem;text-align:center">โหลดไม่สำเร็จ</p>';return;}
+    var ls=res.letters||[];
+    if(!ls.length){ml.innerHTML='<p style="color:var(--mu);padding:2rem;text-align:center;font-size:.85rem">ยังไม่ได้ส่งคำใบ้</p>';return;}
+    ml.innerHTML='';
+    ls.forEach(function(l){
+      var d=document.createElement('div');
+      d.className='mail-item'+(l.released?'':' sched');
+      d.innerHTML='<div style="font-size:1.6rem;flex-shrink:0">'+(l.released?'✉️':'⏰')+'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div class="hd" style="font-size:.78rem;color:'+(l.released?'var(--g)':'#a88aff')+'">'
+          +'ใบที่ '+l.card_number+' '+(l.released?'<span style="font-size:.6rem;color:var(--gd)">(ส่งแล้ว)</span>':'<span style="font-size:.6rem;color:var(--mu)">(รอตั้งเวลา)</span>')+'</div>'
+          +'<div style="font-size:.78rem;color:var(--bd);margin-top:.12rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.message||'')+'</div>'
+          +'<div style="font-size:.65rem;color:var(--mu);margin-top:.1rem">'+(l.released?'ส่ง: ':'กำหนด: ')+fmtDT(l.scheduled_release)+'</div>'
+        +'</div>'
+        +'<div style="color:var(--gd)">›</div>';
+      d.onclick=function(){viewSentLetter(l);};
+      ml.appendChild(d);
+    });
+  });
+}
+
+function viewSentLetter(l){
+  var b=$('sent-modal-body');
+  b.innerHTML='<div style="text-align:center;margin-bottom:1rem">'
+    +'<div style="font-size:2rem">✉️</div>'
+    +'<p class="hd" style="font-size:.7rem;color:var(--gd);letter-spacing:.1em;margin-top:.3rem">คำใบ้ใบที่ '+l.card_number+'</p>'
+    +'<p class="hd" style="font-size:.88rem;color:var(--gl)">'+(S.tarot||'')+'</p>'
+    +'<span style="display:inline-block;margin-top:.25rem;font-size:.62rem;font-family:Cinzel,serif;'
+    +'padding:.15rem .65rem;border-radius:10px;'
+    +'background:rgba('+(l.released?'201,168,76':'107,79,188')+',.12);'
+    +'color:'+(l.released?'var(--g)':'#a88aff')+';'
+    +'border:1px solid rgba('+(l.released?'201,168,76':'107,79,188')+',.3)">'
+    +(l.released?'✓ ส่งแล้ว':'⏰ รอตั้งเวลา')+'</span></div>'
+    +'<div class="gl" style="margin:1rem 0"></div>'
+    +'<p class="bd" style="font-size:1rem;color:var(--iv);line-height:1.7;white-space:pre-wrap;text-align:center">'+esc(l.message||'')+'</p>'
+    +'<div class="gl" style="margin:1rem 0"></div>'
+    +'<p style="font-size:.65rem;color:var(--mu);text-align:center">'+(l.released?'ส่งเมื่อ':'กำหนด')+': '+fmtDT(l.scheduled_release)+'</p>'
+    +'<div style="display:flex;gap:.5rem;margin-top:1rem;justify-content:center">'
+    +(!l.released?'<button class="br" style="min-width:80px" onclick="delLetter(\''+l.mail_id+'\')">🗑 ลบ</button>':'')
+    +'<button class="bo" style="min-width:80px" onclick="closeModal(\'sent-modal\')">ปิด</button>'
+    +'</div>';
+  openModal('sent-modal');
+}
+
+function delLetter(mailId){
+  if(!confirm('ลบคำใบ้นี้?'))return;
+  gsr('seniorDeleteMail',[S.id,S.pass,mailId],function(res){
+    toast(res.success?'🗑 ลบแล้ว':'❌ '+(res.message||'ลบไม่ได้'));
+    if(res.success){closeModal('sent-modal');loadSeniorCard();loadSeniorMail();}
+  });
+}
+
+function sSendChat(){
+  var inp=$('s-chat-inp'),msg=inp.value.trim();if(!msg)return;
+  var room=sChatType==='peer'?S.tarot:sChatType==='admin'?('admin__senior__'+S.tarot.replace(/[^a-zA-Z0-9_-]/g,'_')):'global';
+  var dn;
+  if(sChatType==='global') dn=getAnonName(S.id||S.tarot,'senior');
+  else if(sChatType==='peer') dn=S.tarot+' Senior'; // peer DM: no real name to junior
+  else dn=S.tarot+' Senior ('+S.name+')'; // admin DM: S.name already has "พี่" prefix
+  if(fbSend(room,msg,S.role,dn)){inp.value='';inp.style.height='auto';inp.focus();}
+}
+
+// ── COMPOSE ──────────────────────────────────────────
+function openCompose(){
+  $('compose-txt').value='';$('compose-dt').value='';sdtOpen=false;
+  $('sdt-wrap').style.display='none';$('sched-btn').style.display='none';
+  $('sdt-btn').textContent='⏰';
+  $('compose').classList.add('on');
+  setTimeout(function(){$('compose-txt').focus();},200);
+  // ใช้ cached topic (โหลดตอนเปิดเว็บแล้ว) — ไม่ต้อง call GAS ซ้ำ
+  var banner=$('topic-banner'), txt=$('topic-banner-text');
+  if(_cachedTopic&&banner&&txt){
+    txt.textContent=_cachedTopic;
+    banner.style.display='block';
+  } else {
+    // Fallback: ถ้ายังไม่มี cache (เช่น admin ตั้ง topic หลังเข้าเว็บ)
+    if(banner) banner.style.display='none';
+    gsr('getDailyTopic',[],function(res){
+      if(res&&res.topic&&banner&&txt){
+        _cachedTopic=res.topic;
+        txt.textContent=res.topic;
+        banner.style.display='block';
+      }
+    });
+  }
+}
+function toggleSdt(){
+  sdtOpen=!sdtOpen;
+  $('sdt-wrap').style.display=sdtOpen?'block':'none';
+  $('sched-btn').style.display=sdtOpen?'inline-flex':'none';
+  $('sdt-btn').textContent=sdtOpen?'✕':'⏰';
+}
+function doSend(sched){
+  var msg=$('compose-txt').value.trim();
+  if(!msg){toast('กรุณาเขียนข้อความ');return;}
+  var dt=null;
+  if(sched){dt=$('compose-dt').value;if(!dt){toast('กรุณาเลือกวันเวลา');return;}}
+  var btn=sched?$('sched-btn'):$('send-now-btn');
+  if(btn)btn.disabled=true;
+  gsr('seniorSendMail',[S.id,S.pass,msg,dt],function(res){
+    if(btn)btn.disabled=false;
+    if(!res.success){toast('❌ '+(res.message||'ส่งไม่สำเร็จ'));return;}
+    toast(sched?'⏰ ตั้งเวลาใบที่ '+res.cardNumber:'✅ ส่งใบที่ '+res.cardNumber+' แล้ว!');
+    closeSheet();
+    loadSeniorCard();
+  });
+}
+
+// ── DAILY TOPIC ──────────────────────────────────────
+var _topicToday=null;
+
+function openTopicModal(){
+  // Set date input to today
+  var today=new Date();
+  var dd=today.getFullYear()+'-'
+    +String(today.getMonth()+1).padStart(2,'0')+'-'
+    +String(today.getDate()).padStart(2,'0');
+  $('topic-date-inp').value=dd;
+  $('topic-text-inp').value='';
+  $('topic-modal').classList.add('show');
+  loadTopicList();
+}
+function closeTopicModal(){ $('topic-modal').classList.remove('show'); }
+
+function loadTopicList(){
+  gsr('adminGetTopics',[S.id,S.pass],function(res){
+    var el=$('topic-list');
+    if(!el)return;
+    if(!res||!res.success||!res.topics||!res.topics.length){
+      el.innerHTML='<p style="font-size:.75rem;color:rgba(255,255,255,.3);text-align:center;padding:.8rem">ยังไม่มี topic</p>';
+      return;
+    }
+    var today=new Date();
+    var todayStr=today.getFullYear()+'-'
+      +String(today.getMonth()+1).padStart(2,'0')+'-'
+      +String(today.getDate()).padStart(2,'0');
+    var topics=[].concat(res.topics).reverse();
+    el.innerHTML='';
+    topics.forEach(function(t){
+      var isToday=t.date===todayStr;
+      var row=document.createElement('div');
+      row.className='topic-row';
+      row.innerHTML='<span class="tr-date">'+t.date+'</span>'
+        +'<span class="tr-topic">'+escHtml(t.topic)+'</span>'
+        +(isToday?'<span class="tr-today">วันนี้</span>':'');
+      var editBtn=document.createElement('button');
+      editBtn.className='tr-del';editBtn.textContent='✏️';
+      editBtn.onclick=function(){ editTopic(t.date,t.topic); };
+      var delBtn=document.createElement('button');
+      delBtn.className='tr-del';delBtn.textContent='✕';
+      delBtn.onclick=function(){ deleteTopic(t.date); };
+      row.appendChild(editBtn);row.appendChild(delBtn);
+      el.appendChild(row);
+    });
+  });
+}
+function editTopic(date,topic){
+  $('topic-date-inp').value=date;
+  $('topic-text-inp').value=topic;
+  $('topic-text-inp').focus();
+}
+function saveTopic(){
+  var date=$('topic-date-inp').value;
+  var topic=$('topic-text-inp').value.trim();
+  if(!date){toast('เลือกวันที่ก่อน');return;}
+  if(!topic){toast('ใส่หัวข้อก่อน');return;}
+  gsr('adminSetTopic',[S.id,S.pass,date,topic],function(res){
+    if(!res||!res.success){toast('❌ บันทึกไม่สำเร็จ');return;}
+    toast('✅ บันทึก topic '+date+' แล้ว');
+    $('topic-text-inp').value='';
+    loadTopicList();
+  });
+}
+function deleteTopic(date){
+  gsr('adminDeleteTopic',[S.id,S.pass,date],function(res){
+    if(!res||!res.success){toast('❌ ลบไม่สำเร็จ');return;}
+    toast('ลบ topic '+date+' แล้ว');
+    loadTopicList();
+  });
+}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── DAILY TOPIC ──────────────────────────────────────
+function loadTopicList(){
+  gsr('adminGetTopics',[S.id,S.pass],function(res){
+    var today=new Date();
+    var todayStr=today.getFullYear()+'-'
+      +String(today.getMonth()+1).padStart(2,'0')+'-'
+      +String(today.getDate()).padStart(2,'0');
+    ['topic-list-inline'].forEach(function(elId){
+      var el=$(elId); if(!el)return;
+      if(!res||!res.success||!res.topics||!res.topics.length){
+        el.innerHTML='<p style="font-size:.78rem;color:rgba(255,255,255,.3);text-align:center;padding:1rem">ยังไม่มี topic</p>';
+        return;
+      }
+      var topics=[].concat(res.topics).reverse();
+      el.innerHTML='';
+      topics.forEach(function(t){
+        var isToday=t.date===todayStr;
+        var row=document.createElement('div');
+        row.className='topic-row';
+        var dateSpan=document.createElement('span');dateSpan.className='tr-date';dateSpan.textContent=t.date;
+        var topicSpan=document.createElement('span');topicSpan.className='tr-topic';topicSpan.textContent=t.topic;
+        row.appendChild(dateSpan);row.appendChild(topicSpan);
+        if(isToday){var b=document.createElement('span');b.className='tr-today';b.textContent='วันนี้';row.appendChild(b);}
+        var editBtn=document.createElement('button');editBtn.className='tr-del';editBtn.title='แก้ไข';editBtn.textContent='✏️';
+        editBtn.onclick=function(){editTopic(t.date,t.topic);};
+        var delBtn=document.createElement('button');delBtn.className='tr-del';delBtn.title='ลบ';delBtn.textContent='✕';
+        delBtn.onclick=function(){deleteTopic(t.date);};
+        row.appendChild(editBtn);row.appendChild(delBtn);
+        el.appendChild(row);
+      });
+    });
+  });
+}
+function setTopicDateToday(){
+  var t=new Date();
+  var d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+  var di=$('topic-date-inp'); if(di)di.value=d;
+  var ti=$('topic-text-inp'); if(ti)ti.value='';
+}
+function editTopic(date,topic){
+  var di=$('topic-date-inp'); if(di)di.value=date;
+  var ti=$('topic-text-inp'); if(ti){ti.value=topic;ti.focus();}
+}
+function saveTopic(){
+  var di=$('topic-date-inp'),ti=$('topic-text-inp');
+  if(!di||!ti)return;
+  var date=di.value, topic=ti.value.trim();
+  if(!date){toast('เลือกวันที่ก่อน');return;}
+  if(!topic){toast('ใส่หัวข้อก่อน');return;}
+  gsr('adminSetTopic',[S.id,S.pass,date,topic],function(res){
+    if(!res||!res.success){toast('❌ บันทึกไม่สำเร็จ');return;}
+    toast('✅ บันทึก topic '+date+' แล้ว');
+    ti.value='';
+    loadTopicList();
+  });
+}
+function deleteTopic(date){
+  gsr('adminDeleteTopic',[S.id,S.pass,date],function(res){
+    if(!res||!res.success){toast('❌ ลบไม่สำเร็จ');return;}
+    toast('ลบ topic '+date+' แล้ว');
+    loadTopicList();
+  });
+}
+
+// ── TOPIC REVEAL ─────────────────────────────────────
+var _cachedTopic = null; // cache ไว้ใช้กับ banner
+
+function _getTodayStr(){
+  var t=new Date();
+  return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+}
+
+function maybeShowTopicReveal(){
+  // ไม่แสดงถ้าเป็น admin
+  if(S.role==='admin') return;
+  var todayStr = _getTodayStr();
+  var lsKey = 'wt_topic_seen_'+todayStr+'_'+(S.id||'');
+  if(localStorage.getItem(lsKey)) return; // ดูแล้ววันนี้
+
+  gsr('getDailyTopic',[],function(res){
+    if(!res||!res.topic) return; // ไม่มี topic วันนี้ก็ไม่แสดง
+    _cachedTopic = res.topic;    // cache ไว้ให้ banner ใช้
+    // Mark seen ก่อนแสดง
+    localStorage.setItem(lsKey,'1');
+    _showTopicReveal(res.topic);
+  });
+}
+
+function _showTopicReveal(topic){
+  var modal = $('topic-reveal-modal');
+  var topicEl = $('trm-topic-text');
+  var wrap = $('trm-topic-wrap');
+  if(!modal||!topicEl) return;
+
+  topicEl.textContent = topic;
+
+  // Spawn stars
+  var starsEl = $('trm-stars');
+  if(starsEl){
+    starsEl.innerHTML='';
+    for(var i=0;i<18;i++){
+      (function(i){
+        var star=document.createElement('div');
+        star.className='trm-star';
+        star.style.left=Math.random()*100+'%';
+        star.style.top=Math.random()*100+'%';
+        star.style.width=(Math.random()*3+1.5)+'px';
+        star.style.height=star.style.width;
+        document.getElementById('trm-stars').appendChild(star);
+        setTimeout(function(){
+          star.style.transition='opacity .6s ease, transform .6s ease';
+          star.style.opacity=(Math.random()*.6+.2).toString();
+          star.style.transform='scale('+(Math.random()*2+.5)+')';
+        }, 400+i*60);
+      })(i);
+    }
+  }
+
+  modal.classList.add('show');
+
+  // Reveal topic text after short delay
+  setTimeout(function(){
+    if(wrap) wrap.classList.add('revealed');
+    setTimeout(function(){
+      if(modal) modal.classList.add('ready'); // show button
+    },500);
+  },800);
+}
+
+function closeTopicReveal(){
+  var modal=$('topic-reveal-modal');
+  if(!modal)return;
+  modal.style.transition='opacity .3s ease';
+  modal.style.opacity='0';
+  setTimeout(function(){
+    modal.classList.remove('show','ready');
+    modal.style.opacity='';
+    modal.style.transition='';
+    var wrap=$('trm-topic-wrap');
+    if(wrap) wrap.classList.remove('revealed');
+  },320);
+}
+
+// ── POLL ─────────────────────────────────────────────
+function startPoll(){
+  clearInterval(pollTimer);
+  pollTimer=setInterval(function(){
+    var avail=letters.filter(function(l){return !l.locked;}).length;
+    gsr('pollUpdates',[S.id,S.pass,avail,annSeenTs],function(res){
+      if(!res)return;
+      if(res.hasNewMail&&S.role==='junior'){
+        loadJuniorData();
+        $('j-clue-dot').classList.add('on');
+        $('j-chat-dot').classList.add('on');
+        toast('✦ ได้รับคำใบ้ใหม่!',4000);
+      }
+      if(res.announcement){
+        var a=res.announcement;
+        showAnn(a.title,a.message,a.ts);
+      }
+    });
+  },12000);
+}
+
+// ── ANNOUNCEMENT ─────────────────────────────────────
+function showAnn(title,msg,ts){
+  var tsStr=String(ts||'').trim();
+  // Already seen this exact announcement in this session or stored?
+  if(!tsStr||tsStr==='0')return;
+  if(tsStr===_shownAnnTs||tsStr===annSeenTs)return;
+  $('ann-title').textContent=title||'ข้อความจาก The Oracle';
+  $('ann-msg').textContent=msg||'';
+  $('ann-bg').classList.add('on');
+  annSeenTs=tsStr;
+  _shownAnnTs=tsStr;
+  localStorage.setItem('wt_ann',tsStr);
+  if(S&&S.id)localStorage.setItem('wt_ann_'+S.id,tsStr);
+}
+function closeAnn(){
+  $('ann-bg').classList.remove('on');
+  localStorage.setItem('wt_ann',annSeenTs);
+}
+
+// ── ADMIN ─────────────────────────────────────────────
+function initAdmin(){
+  startAdminRefresh();
+  // Initialize global chat
+  if(fbDB) fbSub('global','adm-global-msgs','admin','Admin',function(){return 'Admin';});
+  // Pre-load DM list for chat tab
+  gsr('getAdminMatrix',[],function(data){
+    if(data.success) buildAdminDMListFromPairs(data.pairs||[]);
+  });
+  // Load topic list on init (ประกาศ is the default tab)
+  setTimeout(function(){ setTopicDateToday(); loadTopicList(); }, 500);
+}
+
+function buildAdminDMList(){
+  // Will be populated after matrix loads
+}
+
+function openMatrixModal(){openModal('matrix-modal');aLoadMatrix();}
+
+function aLoadMatrix(){
+  var el=$('a-mx');if(!el)return;
+  el.innerHTML='<div style="display:flex;justify-content:center;padding:1rem"><div class="loader"></div></div>';
+  gsr('getAdminMatrix',[],function(data){
+    if(!data.success){el.innerHTML='<p style="color:var(--mu);font-size:.8rem">โหลดไม่สำเร็จ</p>';return;}
+    if(data.startDate&&$('a-date'))$('a-date').value=data.startDate;
+    el.innerHTML=(data.pairs||[]).map(function(p){
+      return '<div style="padding:.6rem 0;border-bottom:1px solid rgba(201,168,76,.06)">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.2rem">'
+          +'<div><span class="hd" style="font-size:.76rem;color:var(--g)">'+esc(p.seniorName)+'</span>'
+          +'<span style="color:var(--gd)"> → </span>'
+          +'<span style="font-size:.76rem">'+esc(p.juniorName)+'</span></div>'
+        +'</div>'
+        +'<p style="font-size:.62rem;color:var(--mu)">'+esc(p.tarot)+'</p>'
+        +'<div style="display:flex;gap:.75rem;margin-top:.1rem">'
+          +'<span style="font-size:.68rem;color:var(--bd)">📬 '+p.releasedLetters+'/'+p.totalLetters+'</span>'
+          +'<span style="font-size:.68rem;color:var(--bd)">💬 '+p.chatMessages+'</span>'
+        +'</div></div>';
+    }).join('')||'<p style="color:var(--mu);font-size:.8rem">ไม่มีข้อมูล</p>';
+    buildAdminDMListFromPairs(data.pairs||[]);
+  });
+}
+
+// ── ADMIN REALTIME DM LIST ────────────────────────────
+var _admPairs=[]; // cached pairs from matrix
+var _admRoomListeners={}; // room -> Firebase listener cleanup fn
+var _admUnread={}; // roomKey -> bool
+
+function buildAdminDMListFromPairs(pairs){
+  _admPairs=pairs||[];
+  _buildAdmLists();
+  _startAdmRoomWatchers();
+}
+
+function _buildAdmLists(){
+  var jList=$('adm-junior-list');
+  var sList=$('adm-senior-list');
+  if(!jList||!sList)return;
+
+  // Build junior room suffix map
+  _admPairs.forEach(function(p){
+    p._jRoom=p.juniorId?(p.tarot+'__'+p.juniorId):p.tarot;
+  });
+
+  // Sort juniors: unread first, then by last msg ts
+  var sortedJ=_admPairs.slice().sort(function(a,b){
+    var aU=_admUnread[a._jRoom]?1:0;
+    var bU=_admUnread[b._jRoom]?1:0;
+    if(aU!==bU)return bU-aU;
+    var aT=_admLastMsg[a._jRoom]||0;
+    var bT=_admLastMsg[b._jRoom]||0;
+    return bT-aT;
+  });
+
+  // Deduplicate seniors by tarot
+  var seenSeniors={};
+  var sortedS=[];
+  _admPairs.forEach(function(p){
+    var sk='senior__'+p.tarot;
+    if(!seenSeniors[sk]){
+      seenSeniors[sk]=true;
+      sortedS.push(p);
+    }
+  });
+  sortedS.sort(function(a,b){
+    var aU=_admUnread['senior__'+a.tarot]?1:0;
+    var bU=_admUnread['senior__'+b.tarot]?1:0;
+    if(aU!==bU)return bU-aU;
+    return (_admLastMsg['senior__'+b.tarot]||0)-(_admLastMsg['senior__'+a.tarot]||0);
+  });
+
+  jList.innerHTML='';sList.innerHTML='';
+  sortedJ.forEach(function(p){
+    jList.appendChild(_makeDmItem(p.juniorName,'junior',p.tarot,p._jRoom));
+  });
+  sortedS.forEach(function(p){
+    sList.appendChild(_makeDmItem(p.seniorName,'senior',p.tarot,'senior__'+p.tarot));
+  });
+}
+
+var _admLastMsg={}; // roomKey -> ts
+
+function _startAdmRoomWatchers(){
+  if(!fbDB)return;
+  // Clean up old watchers
+  Object.values(_admRoomListeners).forEach(function(fn){try{fn();}catch(e){}});
+  _admRoomListeners={};
+
+  _admPairs.forEach(function(p){
+    var jRoomSuffix=p.juniorId?(p.tarot+'__'+p.juniorId):p.tarot;
+    _watchAdmRoom(jRoomSuffix,p.juniorName);
+    _watchAdmRoom('senior__'+p.tarot,p.seniorName);
+  });
+}
+
+function _watchAdmRoom(roomSuffix,displayName){
+  var roomKey='admin__'+roomSuffix.replace(/[^a-zA-Z0-9_-]/g,'_');
+  var ref=fbDB.ref('chats/'+roomKey).orderByChild('ts').limitToLast(1);
+  var isFirst=true;
+  var h=ref.on('value',function(snap){
+    snap.forEach(function(c){
+      var m=c.val();
+      if(!m)return;
+      var prevTs=_admLastMsg[roomSuffix]||0;
+      _admLastMsg[roomSuffix]=m.ts||0;
+      if(!isFirst&&m.ts>prevTs&&m.role!=='admin'){
+        // New incoming message from non-admin
+        _admUnread[roomSuffix]=true;
+        _buildAdmLists();
+        // Show in-app notification
+        _notifShow('💬','Admin: ข้อความใหม่จาก '+esc(displayName),m.msg||'',function(){
+          admOpenRoom(roomSuffix,displayName,roomSuffix.indexOf('senior__')===0?'senior':'junior');
+        });
+      } else if(isFirst){
+        _admLastMsg[roomSuffix]=m.ts||0;
+      }
+    });
+    if(isFirst){isFirst=false;_buildAdmLists();}
+  });
+  _admRoomListeners[roomSuffix]=function(){ref.off('value',h);};
+}
+
+function _makeDmItem(name,role,tarot,roomSuffix){
+  var d=document.createElement('div');
+  d.className='dm-item'+((_admUnread[roomSuffix])?(' has-unread'):'');
+  var initials=name.trim().slice(0,2).toUpperCase()||'??';
+  var preview='';
+  var ts=_admLastMsg[roomSuffix]||0;
+  var timeStr=ts?fmtDT(new Date(ts).toISOString()):'';
+  d.innerHTML='<div style="width:38px;height:38px;border-radius:50%;flex-shrink:0;'
+    +'background:linear-gradient(135deg,'+(role==='junior'?'#4f2c9a,#6b4fbc':'#1a3a5c,#2d6b9a')+');'
+    +'display:flex;align-items:center;justify-content:center;font-size:.72rem;font-family:Cinzel,serif;color:#fff;position:relative">'
+    +esc(initials)
+    +'<div style="position:absolute;top:0;right:0;width:10px;height:10px;border-radius:50%;background:#e03050;border:2px solid var(--bg);display:'+(_admUnread[roomSuffix]?'block':'none')+'"></div>'
+    +'</div>'
+    +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:.8rem;color:var(--iv);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(name)+'</div>'
+      +'<div style="font-size:.62rem;color:var(--mu);margin-top:.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(tarot)+(preview?' · '+esc(preview):'')+'</div>'
+    +'</div>'
+    +(timeStr?'<div style="font-size:.58rem;color:var(--gd);flex-shrink:0;align-self:flex-start;padding-top:.1rem">'+timeStr+'</div>':'');
+  d.onclick=function(){admOpenRoom(roomSuffix,name,role);};
+  return d;
+}
+
+function admOpenRoom(roomSuffix,name,role){
+  admChatTarot=roomSuffix;
+  // Mark as read
+  _admUnread[roomSuffix]=false;
+  _buildAdmLists();
+  var title=$('adm-modal-title');
+  if(title)title.textContent='💬 '+name;  $('adm-chat-msgs').innerHTML='';
+  var room='admin__'+roomSuffix.replace(/[^a-zA-Z0-9_-]/g,'_');
+  if(fbDB) fbSub(room,'adm-chat-msgs','admin','Admin',function(){return name;},null);
+  openModal('adm-chat-modal');
+}
+
+function buildAdminChatLists(){
+  if(!_admPairs.length){
+    gsr('getAdminMatrix',[],function(data){
+      if(data.success) buildAdminDMListFromPairs(data.pairs||[]);
+    });
+  }
+}
+
+function makeDMBtn(name,role,tarot,roomSuffix){
+  return _makeDmItem(name,role,tarot,roomSuffix);
+}
+
+function admChatSubTab(name,el){
+  ['juniors','seniors','global'].forEach(function(n){
+    var s=$('adm-sub-'+n);
+    if(s){s.style.display='none';}
+  });
+  var target=$('adm-sub-'+name);
+  if(target){
+    if(name==='global'){
+      target.style.display='flex';
+      target.style.flexDirection='column';
+      if(fbDB){
+        fbSub('global','adm-global-msgs','admin','Admin',function(){return 'Admin';},null);
+      }
+    } else {
+      target.style.display='block';
+      // Start realtime watchers if pairs loaded
+      if(fbDB&&_admPairs.length) _startAdmRoomWatchers();
+    }
+  }
+  document.querySelectorAll('#adm-chat-subtabs .cst').forEach(function(t){t.classList.remove('on');});
+  if(el)el.classList.add('on');
+}
+
+function admSendChat(){
+  var inp=$('adm-chat-inp'),msg=inp.value.trim();if(!msg)return;
+  if(!admChatTarot){toast('เลือกผู้ใช้ก่อน');return;}
+  var room='admin__'+admChatTarot.replace(/[^a-zA-Z0-9_-]/g,'_');
+  if(fbSend(room,msg,'admin','Admin')){
+    inp.value='';inp.style.height='auto';inp.focus();
+    // Update lastMsg timestamp so this chat floats to top of the list
+    _admLastMsg[admChatTarot]=Date.now();
+    _admUnread[admChatTarot]=false; // already in this chat, mark as read
+    _buildAdmLists();
+  }
+}
+
+function aLoadScores(){
+  $('a-sc').innerHTML='<div class="loader"></div>';
+  gsr('getScoreBoard',[],function(res){
+    if(!res.success||!res.board.length){$('a-sc').innerHTML='<p style="color:var(--mu);font-size:.78rem">ยังไม่มีคะแนน</p>';return;}
+    var mx=res.board[0].total||1;
+    $('a-sc').innerHTML=res.board.map(function(r,i){
+      return '<div class="score-row" style="align-items:center">'
+        +'<div style="font-family:Cinzel,serif;font-size:.68rem;color:var(--g);min-width:24px;flex-shrink:0">'+(i+1)+'.</div>'
+        +'<div style="font-family:Cinzel,serif;font-size:.68rem;color:var(--g);flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:clamp(80px,35%,160px);margin-right:.3rem" title="'+esc(r.tarot)+'">'+esc(r.tarot)+'</div>'
+        +'<div class="sbar" style="flex:1"><div class="sfil" style="width:'+Math.round(r.total/mx*100)+'%"></div></div>'
+        +'<div style="font-family:Cinzel,serif;font-size:.78rem;color:var(--gl);min-width:28px;text-align:right;flex-shrink:0">'+r.total+'</div>'
+        +'</div>';
+    }).join('');
+  });
+}
+
+function aSetDate(){
+  var d=$('a-date').value;if(!d){toast('เลือกวันก่อน');return;}
+  gsr('adminSetStartDate',['admin',S.pass,d],function(res){toast(res.success?'✅ บันทึกแล้ว':'❌ ไม่สำเร็จ');});
+}
+
+// ── ADMIN STATS MODALS ────────────────────────────────
+function openScoreModal(){openModal('score-modal');aLoadScores();}
+function openGuessModal(){openModal('guess-board-modal');aLoadGuessBoard();}
+
+function aLoadGuessBoard(){
+  var el=$('a-guess');if(!el)return;
+  el.innerHTML='<div style="display:flex;justify-content:center;padding:1rem"><div class="loader"></div></div>';
+  gsr('getGuessLeaderboard',[],function(res){
+    if(!res||!res.board||!res.board.length){
+      el.innerHTML='<p style="color:var(--mu);font-size:.78rem;text-align:center">ยังไม่มีน้องทายถูก</p>';return;
+    }
+    el.innerHTML=res.board.map(function(r,i){
+      var d=new Date(Number(r.ts||0));
+      var dt=r.ts?d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})+' '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}):'';
+      return '<div style="padding:.5rem 0;border-bottom:1px solid rgba(201,168,76,.08)">'
+        +'<div style="display:flex;align-items:center;gap:.5rem">'
+        +'<span style="font-family:Cinzel,serif;font-size:.75rem;color:var(--g);min-width:20px">'+(i+1)+'.</span>'
+        +'<div><div style="font-size:.82rem;color:var(--iv)">'+esc(r.juniorName||'')+'</div>'
+        +'<div style="font-size:.68rem;color:var(--mu)">ทาย '+esc(r.seniorName||'')+' ถูก</div>'
+        +(dt?'<div style="font-size:.62rem;color:var(--gd)">'+dt+'</div>':'')
+        +'</div></div></div>';
+    }).join('');
+  });
+}
+
+function aLoadLoginStats(){} // removed feature
+
+// ── ADMIN SETTINGS ────────────────────────────────────
+var _passAction=null;
+
+function _askPass(title,action){
+  _passAction=action;
+  $('pass-modal-title').textContent=title||'กรอกรหัสยืนยัน';
+  $('pass-modal-inp').value='';
+  openModal('pass-modal');
+  setTimeout(function(){$('pass-modal-inp').focus();},200);
+}
+
+function doPassConfirm(){
+  var p=$('pass-modal-inp').value.trim();
+  if(!p){toast('กรุณากรอกรหัส');return;}
+  closeModal('pass-modal');
+  if(_passAction)_passAction(p);
+  _passAction=null;
+}
+
+function clearChatRoom(roomType){
+  _askPass('กรอกรหัสเพื่อล้างแชท',function(pass){
+    gsr('validateClearPass',[pass],function(res){
+      if(!res||!res.valid){toast('❌ รหัสไม่ถูกต้อง');return;}
+      if(!fbDB){toast('❌ Firebase ไม่พร้อม');return;}
+      var key=roomType.replace(/[^a-zA-Z0-9_]/g,'_');
+      fbDB.ref('chats/'+key).remove(function(err){
+        if(err){toast('❌ ล้างไม่สำเร็จ');return;}
+        toast('✅ ล้างแชท "'+roomType+'" แล้ว');
+        // Reset msgIds for this room so it re-renders fresh
+        if(msgIds[roomType])delete msgIds[roomType];
+        if(msgIds[key])delete msgIds[key];
+        // Re-subscribe global if that's what was cleared
+        if(roomType==='global'&&$('adm-global-msgs')&&fbDB){
+          setTimeout(function(){
+            fbSub('global','adm-global-msgs','admin','Admin',function(){return 'Admin';});
+          },300);
+        }
+      });
+    });
+  });
+}
+
+function clearChatRoomAll(){
+  _askPass('กรอกรหัสเพื่อล้างแชท DM ทั้งหมด ⚠️',function(pass){
+    gsr('validateClearPass',[pass],function(res){
+      if(!res||!res.valid){toast('❌ รหัสไม่ถูกต้อง');return;}
+      if(!fbDB){toast('❌ Firebase ไม่พร้อม');return;}
+      // Only delete admin__ DM rooms — preserve global chat
+      fbDB.ref('chats').once('value',function(snap){
+        var promises=[];
+        snap.forEach(function(child){
+          var key=child.key||'';
+          if(key.indexOf('admin__')===0){
+            promises.push(fbDB.ref('chats/'+key).remove());
+          }
+        });
+        Promise.all(promises).then(function(){
+          gsr('resetChatScores',[pass],function(){},{});
+          toast('✅ ล้างแชท DM + รีเซ็ตสถิติแล้ว');
+          msgIds={};
+          setTimeout(function(){
+            if(S.role==='junior') loadChat('j');
+            if(S.role==='senior') loadChat('s');
+          },400);
+        }).catch(function(){toast('❌ ล้างไม่สำเร็จ');});
+      });
+    });
+  });
+}
+
+function resetGuess(){
+  _askPass('กรอกรหัสเพื่อรีเซ็ตระบบทายพี่รหัส',function(pass){
+    gsr('resetGuessSystem',[pass],function(res){
+      toast(res&&res.success?'✅ รีเซ็ตระบบทายแล้ว':'❌ รหัสไม่ถูกต้อง');
+    });
+  });
+}
+
+function aForceSync(){
+  toast('🔄 กำลัง Sync...');
+  gsr('getAdminMatrix',[],function(data){
+    if(!data.success){toast('❌ Sync ไม่สำเร็จ');return;}
+    if(data.startDate&&$('a-date'))$('a-date').value=data.startDate;
+    var el=$('a-mx');
+    if(el){
+      el.innerHTML=(data.pairs||[]).map(function(p){
+        return '<div style="padding:.6rem 0;border-bottom:1px solid rgba(201,168,76,.06)">'
+          +'<div><span class="hd" style="font-size:.76rem;color:var(--g)">'+esc(p.seniorName)+'</span>'
+          +'<span style="color:var(--gd)"> → </span>'
+          +'<span style="font-size:.76rem">'+esc(p.juniorName)+'</span></div>'
+          +'<p style="font-size:.62rem;color:var(--mu)">'+esc(p.tarot)+'</p>'
+          +'<div style="display:flex;gap:.75rem;margin-top:.1rem">'
+            +'<span style="font-size:.68rem;color:var(--bd)">📬 '+p.releasedLetters+'/'+p.totalLetters+'</span>'
+            +'<span style="font-size:.68rem;color:var(--bd)">💬 '+p.chatMessages+'</span>'
+          +'</div></div>';
+      }).join('')||'<p style="color:var(--mu);font-size:.8rem">ไม่มีข้อมูล</p>';
+    }
+    buildAdminDMListFromPairs(data.pairs||[]);
+    toast('✅ Sync สำเร็จ');
+  });
+}
+
+function startAdminRefresh(){
+  setInterval(function(){},30000);
+}
+
+function admGlobalSend(){
+  var inp=$('adm-global-inp'),msg=inp.value.trim();if(!msg)return;
+  if(fbSend('global',msg,'admin','Admin')){inp.value='';inp.style.height='auto';inp.focus();}
+}
+
+// ── GUESS SYSTEM (Junior) ────────────────────────────
+var _guessCooldownDeadline=0;
+var _guessHearts=3; // local cache
+
+// Render hearts display
+function _renderHearts(h){
+  var el=$('guess-hearts'),lbl=$('guess-hearts-label');if(!el)return;
+  var full=Math.max(0,Math.min(3,h));
+  el.textContent='❤️'.repeat(full)+'🖤'.repeat(3-full);
+  if(h<=0){lbl.textContent='หัวใจหมดแล้ว 😢';lbl.style.color='var(--crg)';}
+  else if(h===1){lbl.textContent='เหลือ 1 หัวใจแล้ว คิดให้ดีนะ 🥺';lbl.style.color='#e8a03a';}
+  else if(h===2){lbl.textContent='เหลือ 2 หัวใจแล้ว ใช้ให้ดีล่ะ';lbl.style.color='var(--mu)';}
+  else{lbl.textContent='มี 3 หัวใจ ใช้ให้คุ้มนะ';lbl.style.color='var(--mu)';}
+}
+
+function _lockGuessNoHearts(){
+  $('guess-status').innerHTML='<p style="color:var(--crg);font-size:.88rem;line-height:1.5">💔 หัวใจหมดแล้ว ทายไม่ได้แล้วสิ 😢<br><span style="font-size:.75rem;color:var(--mu)">รอเฉลยในกิจกรรมวันสุดท้ายนะ ❤️</span></p>';
+  var inp=$('guess-inp'),btn=$('guess-submit-btn');
+  if(inp){inp.disabled=true;inp.style.opacity='.4';}
+  if(btn){btn.disabled=true;btn.textContent='หัวใจหมดแล้ว 💔';btn.style.opacity='.5';}
+  // Also update the "ลองทายพี่รหัส" button on the card page
+  var guessBtn=$('guess-btn');
+  if(guessBtn){guessBtn.disabled=true;guessBtn.textContent='💔 หัวใจหมดแล้ว';guessBtn.style.opacity='.55';}
+}
+
+function openGuess(){
+  var status=$('guess-status');
+  var inp=$('guess-inp');
+  var btn=$('guess-submit-btn');
+  var heartsEl=$('guess-hearts');
+  var heartsLbl=$('guess-hearts-label');
+
+  // Reset to blank/loading state before opening
+  status.innerHTML='';inp.value='';
+  inp.disabled=true;btn.disabled=true;
+  inp.style.opacity='.4';btn.style.opacity='.4';
+  btn.textContent='กำลังโหลด...';
+  if(heartsEl) heartsEl.textContent='⏳';
+  if(heartsLbl) heartsLbl.textContent='';
+
+  openModal('guess-modal');
+
+  // Fetch status from server, then update UI
+  gsr('juniorGuessStatus',[S.id,S.pass],function(res){
+    inp.style.opacity='';btn.style.opacity='';
+    if(!res||!res.success){
+      // Fallback: assume 3 hearts, allow guess
+      _renderHearts(3);btn.disabled=false;btn.textContent='ทายเลย!';inp.disabled=false;
+      setTimeout(function(){inp.focus();},50);return;
+    }
+    var h=res.hearts!==undefined?res.hearts:3;
+    _guessHearts=h;
+    _renderHearts(h);
+    if(res.alreadyGuessed){
+      status.innerHTML='<p style="color:#6abf69;font-size:.85rem">🎉 ทายถูกแล้ว!</p>';
+      inp.disabled=true;btn.disabled=true;btn.textContent='ทายเลย!';return;
+    }
+    if(res.noHearts||h<=0){_lockGuessNoHearts();return;}
+    if(res.cooldown){
+      _guessCooldownDeadline=Date.now()+(res.waitMs||0);
+      inp.disabled=true;btn.disabled=true;btn.textContent='ทายเลย!';
+      showCooldownTimer(res.waitMs||0);return;
+    }
+    // Ready to guess
+    inp.disabled=false;btn.disabled=false;btn.textContent='ทายเลย!';
+    setTimeout(function(){inp.focus();},50);
+  },{});
+}
+
+function doGuess(){
+  var inp=$('guess-inp');
+  var name=inp.value.trim();
+  if(!name){toast('กรุณากรอกชื่อพี่รหัส');return;}
+  var btn=$('guess-submit-btn');
+  btn.disabled=true;btn.textContent='กำลังตรวจ...';
+  gsr('juniorGuess',[S.id,S.pass,name],function(res){
+    btn.disabled=false;btn.textContent='ทายเลย!';
+    if(!res){toast('❌ เกิดข้อผิดพลาด');return;}
+    var h=res.hearts!==undefined?res.hearts:_guessHearts;
+    _guessHearts=h;
+    _renderHearts(h);
+    if(res.alreadyGuessed){
+      $('guess-status').innerHTML='<p style="color:#6abf69;font-size:.85rem">🎉 ทายถูกแล้ว!</p>';
+      inp.disabled=true;btn.disabled=true;return;
+    }
+    if(res.correct){
+      _guessCooldownDeadline=0;
+      closeModal('guess-modal');
+      showGuessWin();return;
+    }
+    if(res.noHearts||h<=0){
+      $('guess-status').innerHTML='';
+      _lockGuessNoHearts();return;
+    }
+    if(res.cooldown||res.waitMs){
+      var waitMs=res.waitMs||0;
+      _guessCooldownDeadline=Date.now()+waitMs;
+      $('guess-status').innerHTML='<p style="color:var(--crg);font-size:.85rem;margin-bottom:.4rem">❌ ยังไม่ถูกน้า ❌</p>';
+      inp.value='';inp.disabled=true;
+      showCooldownTimer(waitMs);return;
+    }
+  });
+}
+
+var _cooldownInterval=null;
+function showCooldownTimer(initialMs){
+  if(_cooldownInterval)clearInterval(_cooldownInterval);
+  var deadline=Date.now()+initialMs;
+  var statusEl=$('guess-status');if(!statusEl)return;
+  if(!document.getElementById('guess-countdown')){
+    var cdDiv=document.createElement('div');cdDiv.id='guess-countdown';statusEl.appendChild(cdDiv);
+  }
+  function render(){
+    var left=Math.max(0,deadline-Date.now());
+    var hr=Math.floor(left/3600000),mn=Math.floor((left%3600000)/60000),sc=Math.floor((left%60000)/1000);
+    var txt=(hr>0?hr+' ชั่วโมง ':'')+(mn>0||hr>0?mn+' นาที ':'')+sc+' วินาที';
+    var cd=document.getElementById('guess-countdown');
+    if(!cd){clearInterval(_cooldownInterval);return;}
+    if(left<=0){
+      clearInterval(_cooldownInterval);
+      var st=$('guess-status');
+      if(st)st.innerHTML='<p style="color:#6abf69;font-size:.82rem">✅ ทายได้แล้ว ลองเลย 🎉</p>';
+      var inp=$('guess-inp'),btn=$('guess-submit-btn');
+      if(inp){inp.disabled=false;inp.style.opacity='';}
+      if(btn){btn.disabled=false;btn.textContent='ทายเลย!';btn.style.opacity='';}
+      return;
+    }
+    cd.innerHTML='<p style="color:var(--mu);font-size:.82rem;margin-top:.3rem">⏳ ทายได้อีกครั้งในอีก <span style="color:var(--gl);font-family:Cinzel,serif">'+txt+'</span></p>'
+  }
+  render();
+  _cooldownInterval=setInterval(render,1000);
+}
+
+function showGuessWin(){
+  var cv=$('confetti-canvas');
+  cv.style.display='block';cv.width=window.innerWidth;cv.height=window.innerHeight;
+  var ctx=cv.getContext('2d'),pieces=[],frame=0;
+  for(var i=0;i<120;i++){pieces.push({x:Math.random()*cv.width,y:-10-Math.random()*cv.height*.3,vx:(Math.random()-.5)*4,vy:2+Math.random()*4,color:['#c9a84c','#e8c97a','#6b4fbc','#fff','#d03040'][Math.floor(Math.random()*5)],r:Math.random()*6+3,rot:Math.random()*360,vr:(Math.random()-.5)*8});}
+  function drawConfetti(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    pieces.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.vy+=0.05;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.fillStyle=p.color;ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);ctx.restore();});
+    if(++frame<180)requestAnimationFrame(drawConfetti);
+    else{ctx.clearRect(0,0,cv.width,cv.height);cv.style.display='none';}
+  }
+  requestAnimationFrame(drawConfetti);
+  var ov=document.createElement('div');ov.className='modal-bg on';ov.style.zIndex='210';
+  var inner=document.createElement('div');inner.className='pan mbox-ani';inner.style.cssText='max-width:320px;width:100%;padding:2rem 1.5rem;text-align:center';
+  inner.innerHTML='<div style="font-size:3rem;margin-bottom:.5rem">🎉</div>'
+    +'<p class="hd" style="font-size:1rem;color:var(--gl);margin-bottom:.6rem">ดีใจด้วย ทายพี่รหัสถูกแล้วว🎉</p>'
+    +'<div class="gl" style="margin-bottom:1rem"></div>'
+    +'<p style="font-size:.85rem;color:var(--iv);margin-bottom:1rem">เก่งมากๆๆ แต่เก็บความลับนี้ไว้ก่อนนะ 🤫</p>';
+  var cb=document.createElement('button');cb.className='bg w-full';cb.style.cssText='width:100%;padding:.65rem';cb.textContent='ปิด';cb.onclick=function(){ov.remove();};
+  inner.appendChild(cb);ov.appendChild(inner);ov.onclick=function(e){if(e.target===ov)ov.remove();};document.body.appendChild(ov);
+}
+
+function updateReadAllBtn(){
+  var btn=$('read-all-btn');if(!btn)return;
+  var unlocked=letters.filter(function(l){return !l.locked;});
+  btn.style.display=unlocked.length?'inline-flex':'none';
+}
+
+function openAllClues(){
+  var list=$('all-clues-list');list.innerHTML='';
+  var unlocked=letters.filter(function(l){return !l.locked;});
+  if(!unlocked.length){list.innerHTML='<p style="color:var(--mu);font-size:.85rem">ยังไม่มีคำใบ้</p>';openModal('all-clues-modal');return;}
+  unlocked.forEach(function(l){
+    var d=document.createElement('div');
+    d.style.cssText='padding:.75rem;border:1px solid rgba(201,168,76,.18);border-radius:10px;background:rgba(14,15,30,.6)';
+    d.innerHTML='<p class="hd" style="font-size:.68rem;color:var(--gd);margin-bottom:.3rem">คำใบ้ #'+l.card_number+'</p>'
+      +'<p class="bd" style="font-size:.9rem;color:var(--iv);line-height:1.6;white-space:pre-wrap;font-style:italic">'+esc(l.message||'')+'</p>'
+      +'<p style="font-size:.6rem;color:var(--mu);margin-top:.3rem">'+fmtDT(l.created_at)+'</p>';
+    list.appendChild(d);
+  });
+  openModal('all-clues-modal');
+}
+
+function _updateAnnPreview(title,msg){
+  var box=$('a-ann-preview');if(!box)return;
+  if(title||msg){
+    $('a-ann-preview-title').textContent=title||'(ไม่มีหัวข้อ)';
+    $('a-ann-preview-msg').textContent=msg||'';
+    box.style.display='block';
+  } else {box.style.display='none';}
+}
+
+function aDeleteAnn(){
+  if(!confirm('ลบประกาศปัจจุบันออก? ทุกคนจะไม่เห็น popup นี้อีก'))return;
+  gsr('deleteAnnouncement',[S.pass],function(res){
+    if(res&&res.success){
+      toast('🗑 ลบประกาศแล้ว');
+      _updateAnnPreview('','');
+    } else toast('❌ ลบไม่สำเร็จ');
+  });
+}
+
+function aSendAnn(){
+  var msg=$('a-am').value.trim(),title=$('a-at').value.trim();
+  if(!msg){toast('กรุณาใส่ข้อความ');return;}
+  var btn=event&&(event.currentTarget||event.target);
+  if(btn){btn.disabled=true;btn._orig=btn.textContent;btn.textContent='📡 กำลังส่ง...';btn.style.opacity='.55';}
+  gsr('adminSendAnnouncement',['admin',S.pass,msg,title||'ข้อความจาก The Oracle'],function(res){
+    if(btn){btn.disabled=false;btn.textContent=btn._orig||'📡 ส่งประกาศ';btn.style.opacity='';}
+    if(res.success){
+      toast('📡 ส่งประกาศแล้ว');
+      _updateAnnPreview(title||'ข้อความจาก The Oracle',msg);
+    } else toast('❌ ไม่สำเร็จ');
+  });
+}
+
+// ── iOS KEYBOARD FIX (visualViewport) ───────────────
+// iOS Safari doesn't shrink the layout viewport when keyboard opens.
+// visualViewport.height gives the visible area excluding keyboard.
+(function(){
+  if(!window.visualViewport) return;
+  var app=document.getElementById('app');
+  var lastH=0;
+  function onVPResize(){
+    var vv=window.visualViewport;
+    if(!app||!vv) return;
+    var h=Math.round(vv.height);
+    if(Math.abs(h-lastH)<2) return; // ignore tiny changes
+    lastH=h;
+    // Use requestAnimationFrame to avoid mid-reflow updates that dismiss keyboard
+    requestAnimationFrame(function(){
+      app.style.height=h+'px';
+      app.style.top=(vv.offsetTop||0)+'px';
+    });
+  }
+  window.visualViewport.addEventListener('resize',onVPResize,{passive:true});
+  window.visualViewport.addEventListener('scroll',onVPResize,{passive:true});
+  // Reset app height when keyboard closes (user taps outside input)
+  document.addEventListener('focusout',function(e){
+    var tag=e.target&&e.target.tagName;
+    if(tag==='INPUT'||tag==='TEXTAREA'){
+      // Don't reset immediately — check if focus moved to another input
+      setTimeout(function(){
+        var ae=document.activeElement;
+        var isInput=ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA');
+        if(!isInput&&app){app.style.height='';app.style.top='';lastH=0;}
+      },150);
+    }
+  });
+  // Tap on chat-msgs area to dismiss keyboard (not close it automatically)
+  document.querySelectorAll('.chat-msgs').forEach(function(el){
+    el.addEventListener('touchstart',function(){
+      var ae=document.activeElement;
+      if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'))ae.blur();
+    },{passive:true});
+  });
+})();
+</script>
+
+<!-- STARFIELD -->
+<script>
+(function(){
+  var cv=document.getElementById('star-canvas'),ctx=cv.getContext('2d');
+  var SC=[[255,255,255],[210,230,255],[255,245,200],[201,168,76],[200,220,255]];
+  var W,H,cx,cy,stars=[],neb=[],sh=[],panX=0,dVX=0,lt=null;
+  function resize(){W=cv.width=window.innerWidth*devicePixelRatio;H=cv.height=window.innerHeight*devicePixelRatio;cx=W/2;cy=H/2;}
+  function init(){
+    stars=[];
+    for(var i=0;i<260;i++){
+      var th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1);
+      var sz=Math.random()<.05?1.8+Math.random()*1.4:Math.random()<.18?1+Math.random()*.7:.3+Math.random()*.55;
+      stars.push({th:th,ph:ph,sz:sz,c:SC[Math.floor(Math.random()*SC.length)],ts:.008+Math.random()*.035,tp:Math.random()*Math.PI*2,ta:.2+Math.random()*.5,br:.45+Math.random()*.55});
+    }
+    neb=[{th:.8,ph:1.1,r:26,g:16,b:64,a:.15,rad:160},{th:2.5,ph:.8,r:13,g:26,b:48,a:.12,rad:130},{th:4,ph:1.5,r:40,g:10,b:60,a:.1,rad:150}];
+  }
+  function proj(th,ph){
+    var t=th+panX,p=ph+Math.sin(Date.now()*.00008)*.07;
+    var x3=Math.sin(p)*Math.cos(t),y3=Math.cos(p),z3=Math.sin(p)*Math.sin(t);
+    if(z3<-.1)return null;
+    var zz=z3+1.5,sc=W/600;
+    return{sx:cx+(x3/zz)*240*sc,sy:cy-(y3/zz)*240*(H/800),d:zz};
+  }
+  var lastT=0;
+  function loop(t){
+    requestAnimationFrame(loop);var dt=Math.min(t-lastT,80);lastT=t;
+    panX+=.015*.016*dt;panX+=dVX;dVX*=.93;
+    var bg=ctx.createRadialGradient(cx,cy*.5,0,cx,cy,Math.max(W,H)*.8);
+    bg.addColorStop(0,'rgba(22,14,58,1)');bg.addColorStop(.5,'rgba(12,12,28,1)');bg.addColorStop(1,'rgba(8,9,15,1)');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    neb.forEach(function(n){
+      var p=proj(n.th,n.ph);if(!p)return;
+      var sc=Math.min(W,H)/600;
+      var g=ctx.createRadialGradient(p.sx,p.sy,0,p.sx,p.sy,n.rad*sc/p.d);
+      g.addColorStop(0,'rgba('+n.r+','+n.g+','+n.b+','+n.a+')');g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.sx,p.sy,n.rad*sc/p.d,0,Math.PI*2);ctx.fill();
+    });
+    stars.forEach(function(s){
+      var p=proj(s.th,s.ph);if(!p||p.sx<-20||p.sx>W+20||p.sy<-20||p.sy>H+20)return;
+      var tw=1-s.ta*.5+s.ta*Math.sin(t*s.ts*.05+s.tp);
+      var al=Math.min(1,s.br*tw/p.d);var r=Math.max(.3,s.sz/p.d);
+      var c=s.c;
+      if(s.sz>1.2){var gl=ctx.createRadialGradient(p.sx,p.sy,0,p.sx,p.sy,r*4.5);gl.addColorStop(0,'rgba('+c[0]+','+c[1]+','+c[2]+','+al*.4+')');gl.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gl;ctx.beginPath();ctx.arc(p.sx,p.sy,r*4.5,0,Math.PI*2);ctx.fill();}
+      ctx.fillStyle='rgba('+c[0]+','+c[1]+','+c[2]+','+Math.min(1,al*1.3)+')';ctx.beginPath();ctx.arc(p.sx,p.sy,r,0,Math.PI*2);ctx.fill();
+    });
+    sh=sh.filter(function(s){return s.l>0;});
+    sh.forEach(function(s){
+      s.x+=Math.cos(s.a)*s.sp;s.y+=Math.sin(s.a)*s.sp;s.l-=.022;
+      var tx=s.x-Math.cos(s.a)*s.len,ty=s.y-Math.sin(s.a)*s.len;
+      var g=ctx.createLinearGradient(tx,ty,s.x,s.y);
+      g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,'+s.l+')');
+      ctx.strokeStyle=g;ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(s.x,s.y);ctx.stroke();
+    });
+    var vg=ctx.createRadialGradient(cx,cy,Math.min(W,H)*.25,cx,cy,Math.max(W,H)*.85);
+    vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.58)');
+    ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+  }
+  function pd(e){var pt=e.touches?e.touches[0]:e;lt={x:pt.clientX,y:pt.clientY};}
+  function pm(e){if(!lt)return;var pt=e.touches?e.touches[0]:e;dVX=-(pt.clientX-lt.x)*.0004;lt={x:pt.clientX,y:pt.clientY};}
+  function pu(){lt=null;}
+  cv.addEventListener('mousedown',pd,{passive:true});cv.addEventListener('mousemove',pm,{passive:true});cv.addEventListener('mouseup',pu);
+  cv.addEventListener('touchstart',pd,{passive:true});cv.addEventListener('touchmove',pm,{passive:true});cv.addEventListener('touchend',pu);
+  setInterval(function(){sh.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight*.4,a:Math.PI/6+Math.random()*Math.PI/6,sp:7+Math.random()*8,len:90+Math.random()*110,l:1});},4500);
+  resize();init();requestAnimationFrame(loop);
+  window.addEventListener('resize',resize);
+})();
+</script>
+</body>
+</html>
