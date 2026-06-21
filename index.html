@@ -1351,6 +1351,8 @@ function doLogout(){
   clearInterval(pollTimer);
   Object.values(fbListeners).forEach(function(fn){try{fn();}catch(e){}});
   Object.values(_admRoomListeners).forEach(function(fn){try{fn();}catch(e){}});
+  if(_matrixListener){try{_matrixListener();}catch(e){}}_matrixListener=null;
+  if(_scoreListener){try{_scoreListener();}catch(e){}}_scoreListener=null;
   fbListeners={};_admRoomListeners={};_admPairs=[];_admUnread={};_admLastMsg={};msgIds={};spamBuf=[];
   if(fbDB){try{fbDB.goOffline();}catch(e){}}
   fbDB=null;fbApp=null;S={};letters=[];selFanCard=null;
@@ -2225,28 +2227,53 @@ function buildAdminDMList(){
 
 function openMatrixModal(){openModal('matrix-modal');aLoadMatrix();}
 
+// Firebase cache paths
+var FB_CACHE_MATRIX = 'admin_cache/matrix';
+var FB_CACHE_SCORE  = 'admin_cache/scoreboard';
+
+function _renderMatrix(data){
+  var el=$('a-mx');if(!el)return;
+  if(!data||!data.pairs){el.innerHTML='<p style="color:var(--mu);font-size:.8rem">ไม่มีข้อมูล</p>';return;}
+  if(data.startDate&&$('a-date'))$('a-date').value=data.startDate;
+  el.innerHTML=(data.pairs||[]).map(function(p){
+    return '<div style="padding:.6rem 0;border-bottom:1px solid rgba(201,168,76,.06)">'      +'<div><span class="hd" style="font-size:.76rem;color:var(--g)">'+esc(p.seniorName)+'</span>'      +' &#8594; <span style="font-size:.76rem">'+esc(p.juniorName)+'</span></div>'      +'<p style="font-size:.62rem;color:var(--mu)">'+esc(p.tarot)+'</p>'      +'<div style="display:flex;gap:.75rem">'        +'<span style="font-size:.68rem;color:var(--bd)">&#128226; '+p.releasedLetters+'/'+p.totalLetters+'</span>'        +'<span style="font-size:.68rem;color:var(--bd)">&#128172; '+p.chatMessages+'</span>'      +'</div></div>';
+  }).join('')||'<p style="color:var(--mu);font-size:.8rem">ไม่มีข้อมูล</p>';
+  buildAdminDMListFromPairs(data.pairs||[]);
+}
+
+var _matrixListener=null;
 function aLoadMatrix(){
   var el=$('a-mx');if(!el)return;
   el.innerHTML='<div style="display:flex;justify-content:center;padding:1rem"><div class="loader"></div></div>';
+  if(fbDB){
+    if(_matrixListener){try{_matrixListener();}catch(e){}}_matrixListener=null;
+    var ref=fbDB.ref(FB_CACHE_MATRIX);
+    ref.once('value',function(snap){
+      var c=snap.val();
+      if(c&&c.pairs&&c.pairs.length){
+        _renderMatrix(c);
+        ref.on('value',function(s){var d=s.val();if(d&&d.pairs)_renderMatrix(d);});
+        _matrixListener=function(){ref.off();};
+      } else { _matrixFromGAS(); }
+    },function(){ _matrixFromGAS(); });
+  } else { _matrixFromGAS(); }
+}
+
+function _matrixFromGAS(){
   gsr('getAdminMatrix',[],function(data){
-    if(!data.success){el.innerHTML='<p style="color:var(--mu);font-size:.8rem">โหลดไม่สำเร็จ</p>';return;}
-    if(data.startDate&&$('a-date'))$('a-date').value=data.startDate;
-    el.innerHTML=(data.pairs||[]).map(function(p){
-      return '<div style="padding:.6rem 0;border-bottom:1px solid rgba(201,168,76,.06)">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.2rem">'
-          +'<div><span class="hd" style="font-size:.76rem;color:var(--g)">'+esc(p.seniorName)+'</span>'
-          +'<span style="color:var(--gd)"> → </span>'
-          +'<span style="font-size:.76rem">'+esc(p.juniorName)+'</span></div>'
-        +'</div>'
-        +'<p style="font-size:.62rem;color:var(--mu)">'+esc(p.tarot)+'</p>'
-        +'<div style="display:flex;gap:.75rem;margin-top:.1rem">'
-          +'<span style="font-size:.68rem;color:var(--bd)">📬 '+p.releasedLetters+'/'+p.totalLetters+'</span>'
-          +'<span style="font-size:.68rem;color:var(--bd)">💬 '+p.chatMessages+'</span>'
-        +'</div></div>';
-    }).join('')||'<p style="color:var(--mu);font-size:.8rem">ไม่มีข้อมูล</p>';
-    buildAdminDMListFromPairs(data.pairs||[]);
+    var el=$('a-mx');
+    if(!data||!data.success){if(el)el.innerHTML='<p style="color:var(--mu);font-size:.8rem">โหลดไม่สำเร็จ</p>';return;}
+    _renderMatrix(data);
+    if(fbDB){fbDB.ref(FB_CACHE_MATRIX).set({pairs:data.pairs||[],startDate:data.startDate||'',updatedAt:Date.now()}).catch(function(){});}
   });
 }
+
+function aRefreshMatrix(){
+  var el=$('a-mx');if(!el)return;
+  el.innerHTML='<div style="display:flex;justify-content:center;padding:1rem"><div class="loader"></div></div>';
+  _matrixFromGAS();
+}
+
 
 // ── ADMIN REALTIME DM LIST ────────────────────────────
 var _admPairs=[]; // cached pairs from matrix
@@ -2429,21 +2456,39 @@ function admSendChat(){
   }
 }
 
+function _renderScores(res){
+  if(!res||!res.board||!res.board.length){$('a-sc').innerHTML='<p style="color:var(--mu);font-size:.78rem">ยังไม่มีคะแนน</p>';return;}
+  var mx=res.board[0].total||1;
+  $('a-sc').innerHTML=res.board.map(function(r,i){
+    return '<div class="score-row" style="align-items:center">'      +'<div style="font-family:Cinzel,serif;font-size:.68rem;color:var(--g);min-width:24px">'+(i+1)+'.</div>'      +'<div style="font-family:Cinzel,serif;font-size:.68rem;color:var(--g);flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:clamp(80px,35%,160px);margin-right:.3rem">'+esc(r.tarot)+'</div>'      +'<div class="sbar" style="flex:1"><div class="sfil" style="width:'+Math.round(r.total/mx*100)+'%"></div></div>'      +'<div style="font-family:Cinzel,serif;font-size:.78rem;color:var(--gl);min-width:28px;text-align:right">'+r.total+'</div>'      +'</div>';
+  }).join('');
+}
+
+var _scoreListener=null;
 function aLoadScores(){
   $('a-sc').innerHTML='<div class="loader"></div>';
+  if(fbDB){
+    if(_scoreListener){try{_scoreListener();}catch(e){}}_scoreListener=null;
+    var ref=fbDB.ref(FB_CACHE_SCORE);
+    ref.once('value',function(snap){
+      var c=snap.val();
+      if(c&&c.board&&c.board.length){
+        _renderScores(c);
+        ref.on('value',function(s){var d=s.val();if(d)_renderScores(d);});
+        _scoreListener=function(){ref.off();};
+      } else { _scoresFromGAS(); }
+    },function(){ _scoresFromGAS(); });
+  } else { _scoresFromGAS(); }
+}
+
+function _scoresFromGAS(){
   gsr('getScoreBoard',[],function(res){
-    if(!res.success||!res.board.length){$('a-sc').innerHTML='<p style="color:var(--mu);font-size:.78rem">ยังไม่มีคะแนน</p>';return;}
-    var mx=res.board[0].total||1;
-    $('a-sc').innerHTML=res.board.map(function(r,i){
-      return '<div class="score-row" style="align-items:center">'
-        +'<div style="font-family:Cinzel,serif;font-size:.68rem;color:var(--g);min-width:24px;flex-shrink:0">'+(i+1)+'.</div>'
-        +'<div style="font-family:Cinzel,serif;font-size:.68rem;color:var(--g);flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:clamp(80px,35%,160px);margin-right:.3rem" title="'+esc(r.tarot)+'">'+esc(r.tarot)+'</div>'
-        +'<div class="sbar" style="flex:1"><div class="sfil" style="width:'+Math.round(r.total/mx*100)+'%"></div></div>'
-        +'<div style="font-family:Cinzel,serif;font-size:.78rem;color:var(--gl);min-width:28px;text-align:right;flex-shrink:0">'+r.total+'</div>'
-        +'</div>';
-    }).join('');
+    if(!res||!res.success)return;
+    _renderScores(res);
+    if(fbDB&&res.board){fbDB.ref(FB_CACHE_SCORE).set({board:res.board,updatedAt:Date.now()}).catch(function(){});}
   });
 }
+
 
 function aSetDate(){
   var d=$('a-date').value;if(!d){toast('เลือกวันก่อน');return;}
